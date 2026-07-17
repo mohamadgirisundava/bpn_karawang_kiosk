@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/realtime_service.dart';
+import '../../../core/utils/error_message.dart';
 import '../../../domain/usecases/get_active_counters.dart';
 import '../../../domain/usecases/get_estimate_per_person.dart';
 import '../../../domain/usecases/get_queue_info.dart';
@@ -42,7 +43,12 @@ class QueueInfoCubit extends Cubit<QueueInfoState> {
       await _refreshQueueInfo();
       _setupRealtime();
     } catch (e) {
-      emit(state.copyWith(status: QueueInfoStatus.error));
+      emit(
+        state.copyWith(
+          status: QueueInfoStatus.error,
+          errorMessage: friendlyErrorMessage(e),
+        ),
+      );
     }
   }
 

@@ -116,10 +116,45 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                             );
                           }
 
+                          if (state.status == QueueInfoStatus.error) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_off,
+                                    size: Responsive.sp(48),
+                                    color: Colors.red.shade300,
+                                  ),
+                                  SizedBox(height: Responsive.h(12)),
+                                  Text(
+                                    state.errorMessage,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: Responsive.sp(14 * 0.8),
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                  SizedBox(height: Responsive.h(16)),
+                                  ElevatedButton.icon(
+                                    onPressed: () =>
+                                        _queueInfoCubit.loadData(),
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text('Coba Lagi'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.navy,
+                                      foregroundColor: AppColors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
                           if (state.counters.isEmpty) {
                             return Center(
                               child: Text(
-                                'Tidak ada data loket',
+                                'Belum ada loket aktif saat ini',
                                 style: TextStyle(
                                   fontSize: Responsive.sp(14 * 0.8),
                                   color: AppColors.textMuted,

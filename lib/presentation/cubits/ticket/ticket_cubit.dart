@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/error_message.dart';
 import '../../../domain/usecases/create_queue.dart';
 import '../../../domain/usecases/get_estimate_per_person.dart';
 import '../../../domain/usecases/get_queue_info.dart';
@@ -46,7 +47,10 @@ class TicketCubit extends Cubit<TicketState> {
       emit(state.copyWith(status: TicketStatus.success, ticket: ticket));
     } catch (e) {
       emit(
-        state.copyWith(status: TicketStatus.error, errorMessage: e.toString()),
+        state.copyWith(
+          status: TicketStatus.error,
+          errorMessage: friendlyErrorMessage(e),
+        ),
       );
     }
   }

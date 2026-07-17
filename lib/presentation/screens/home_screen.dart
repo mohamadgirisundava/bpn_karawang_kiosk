@@ -364,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icon(Icons.cloud_off, size: 64, color: Colors.red.shade300),
                 const SizedBox(height: 16),
                 const Text(
-                  'Gagal Terhubung ke Server',
+                  'Gagal Memuat Data Loket',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -396,6 +396,36 @@ class _HomeScreenState extends State<HomeScreen> {
                       vertical: 12,
                     ),
                   ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (state.counters.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 64,
+                  color: AppColors.textMuted.withValues(alpha: 0.6),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Belum Ada Layanan Tersedia',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Silakan hubungi petugas untuk informasi lebih lanjut.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: AppColors.textMuted),
                 ),
               ],
             ),
