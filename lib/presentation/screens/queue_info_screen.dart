@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../domain/entities/counter_entity.dart';
@@ -38,18 +39,17 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
           children: [
             Container(
               width: double.infinity,
+              height: 100,
               padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + Responsive.h(12),
-                bottom: Responsive.h(12),
                 left: Responsive.w(8),
-                right: Responsive.w(16),
+                right: Responsive.w(14),
               ),
               decoration: BoxDecoration(
                 color: AppColors.navy,
                 border: Border(
                   bottom: BorderSide(
                     color: AppColors.gold,
-                    width: Responsive.h(4),
+                    width: Responsive.h(3),
                   ),
                 ),
               ),
@@ -68,6 +68,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                       'Informasi Antrian',
                       textAlign: TextAlign.center,
                       style: TextStyle(
+                        fontFamily: 'NunitoSans',
                         fontSize: Responsive.sp(16),
                         fontWeight: FontWeight.bold,
                         color: AppColors.white,
@@ -80,7 +81,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(Responsive.w(24)),
+                padding: EdgeInsets.all(Responsive.w(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -90,23 +91,23 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                           Text(
                             'Nomor Antrian Berjalan',
                             style: TextStyle(
-                              fontSize: Responsive.sp(24 * 0.8),
+                              fontSize: Responsive.sp(18),
                               fontWeight: FontWeight.bold,
                               color: AppColors.navy,
                             ),
                           ),
-                          SizedBox(height: Responsive.h(4)),
+                          SizedBox(height: Responsive.h(3)),
                           Text(
                             'Update secara real-time',
                             style: TextStyle(
-                              fontSize: Responsive.sp(14 * 0.8),
+                              fontSize: Responsive.sp(12),
                               color: AppColors.textMuted,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(height: Responsive.h(24)),
+                    SizedBox(height: Responsive.h(14)),
                     Expanded(
                       child: BlocBuilder<QueueInfoCubit, QueueInfoState>(
                         builder: (context, state) {
@@ -133,7 +134,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                                     state.errorMessage,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: Responsive.sp(14 * 0.8),
+                                      fontSize: Responsive.sp(14),
                                       color: AppColors.textMuted,
                                     ),
                                   ),
@@ -142,10 +143,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                                     onPressed: () => _queueInfoCubit.loadData(),
                                     icon: const Icon(Icons.refresh),
                                     label: const Text('Coba Lagi'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.navy,
-                                      foregroundColor: AppColors.white,
-                                    ),
+                                    style: AppButtonStyles.elevated(),
                                   ),
                                 ],
                               ),
@@ -157,7 +155,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                               child: Text(
                                 'Belum ada loket aktif saat ini',
                                 style: TextStyle(
-                                  fontSize: Responsive.sp(14 * 0.8),
+                                  fontSize: Responsive.sp(14),
                                   color: AppColors.textMuted,
                                 ),
                               ),
@@ -184,6 +182,9 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                                   rows;
 
                               return GridView.builder(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: Responsive.w(50),
+                                ),
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
@@ -208,22 +209,8 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.navy,
-                          foregroundColor: AppColors.white,
-                          padding: EdgeInsets.symmetric(
-                            vertical: Responsive.sp(16 * 0.8),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              Responsive.r(4),
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'Kembali ke Menu Utama',
-                          style: TextStyle(fontSize: Responsive.sp(16 * 0.8)),
-                        ),
+                        style: AppButtonStyles.elevated(),
+                        child: const Text('Kembali ke Menu Utama'),
                       ),
                     ),
                   ],
@@ -269,7 +256,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                   Text(
                     counter.name.toUpperCase(),
                     style: TextStyle(
-                      fontSize: Responsive.sp(12 * 0.8),
+                      fontSize: Responsive.sp(12),
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.6,
                       color: AppColors.textMuted,
@@ -284,7 +271,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                       child: Text(
                         nomorSekarang,
                         style: TextStyle(
-                          fontSize: Responsive.sp(30 * 0.8),
+                          fontSize: Responsive.sp(30),
                           fontWeight: FontWeight.bold,
                           color: AppColors.navy,
                           fontFeatures: const [FontFeature.tabularFigures()],
@@ -300,14 +287,14 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                         children: [
                           Icon(
                             Icons.people,
-                            size: Responsive.sp(12 * 0.8),
+                            size: Responsive.sp(12),
                             color: AppColors.textMuted,
                           ),
                           SizedBox(width: Responsive.w(3)),
                           Text(
                             '$sisaAntrian antrian',
                             style: TextStyle(
-                              fontSize: Responsive.sp(10 * 0.8),
+                              fontSize: Responsive.sp(10),
                               color: AppColors.textMuted,
                             ),
                           ),
@@ -318,14 +305,14 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                         children: [
                           Icon(
                             Icons.access_time,
-                            size: Responsive.sp(12 * 0.8),
+                            size: Responsive.sp(12),
                             color: AppColors.textMuted,
                           ),
                           SizedBox(width: Responsive.w(3)),
                           Text(
                             '~$estimasiMenit menit',
                             style: TextStyle(
-                              fontSize: Responsive.sp(10 * 0.8),
+                              fontSize: Responsive.sp(10),
                               color: AppColors.textMuted,
                             ),
                           ),
@@ -344,7 +331,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
               child: Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: Responsive.w(8),
-                  vertical: 3,
+                  vertical: Responsive.h(3),
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.orange,
@@ -356,7 +343,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                 child: Text(
                   'PRIORITAS',
                   style: TextStyle(
-                    fontSize: Responsive.sp(8 * 0.8),
+                    fontSize: Responsive.sp(8),
                     fontWeight: FontWeight.bold,
                     color: AppColors.white,
                   ),

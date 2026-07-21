@@ -80,7 +80,7 @@ class _IdleScreenState extends State<IdleScreen>
                         ),
                         child: Icon(
                           Icons.account_balance,
-                          size: Responsive.sp(100 * 0.8),
+                          size: Responsive.sp(100),
                           color: AppColors.white,
                         ),
                       );
@@ -91,7 +91,7 @@ class _IdleScreenState extends State<IdleScreen>
                     'Kantor Pertanahan\nKabupaten Karawang',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: Responsive.sp(28 * 0.8),
+                      fontSize: Responsive.sp(28),
                       fontWeight: FontWeight.bold,
                       color: AppColors.navy,
                     ),
@@ -102,7 +102,7 @@ class _IdleScreenState extends State<IdleScreen>
                     child: Text(
                       'Sentuh layar untuk mulai',
                       style: TextStyle(
-                        fontSize: Responsive.sp(20 * 0.8),
+                        fontSize: Responsive.sp(20),
                         color: AppColors.textMuted,
                       ),
                     ),

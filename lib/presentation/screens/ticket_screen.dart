@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/sound_service.dart';
 import '../../core/utils/audio_feedback.dart';
@@ -74,14 +75,14 @@ class _TicketScreenState extends State<TicketScreen>
             Icon(
               Icons.help_outline,
               color: AppColors.navy,
-              size: Responsive.sp(28 * 0.8),
+              size: Responsive.sp(28),
             ),
             SizedBox(width: Responsive.w(8)),
             Expanded(
               child: Text(
                 'Anda yakin ingin mengambil nomor antrian?',
                 style: TextStyle(
-                  fontSize: Responsive.sp(18 * 0.8),
+                  fontSize: Responsive.sp(18),
                   color: AppColors.navy,
                 ),
               ),
@@ -99,7 +100,7 @@ class _TicketScreenState extends State<TicketScreen>
               Icon(
                 widget.counter.icon,
                 color: AppColors.navy,
-                size: Responsive.sp(40 * 0.8),
+                size: Responsive.sp(40),
               ),
               SizedBox(width: Responsive.w(16)),
               Column(
@@ -109,7 +110,7 @@ class _TicketScreenState extends State<TicketScreen>
                   Text(
                     widget.counter.name,
                     style: TextStyle(
-                      fontSize: Responsive.sp(20 * 0.8),
+                      fontSize: Responsive.sp(20),
                       fontWeight: FontWeight.bold,
                       color: AppColors.navy,
                     ),
@@ -117,7 +118,7 @@ class _TicketScreenState extends State<TicketScreen>
                   Text(
                     widget.counter.description,
                     style: TextStyle(
-                      fontSize: Responsive.sp(14 * 0.8),
+                      fontSize: Responsive.sp(14),
                       color: AppColors.textMuted,
                     ),
                   ),
@@ -129,34 +130,16 @@ class _TicketScreenState extends State<TicketScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(
-              'Batal',
-              style: TextStyle(fontSize: Responsive.sp(16 * 0.8)),
-            ),
+            style: AppButtonStyles.text(),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               _ambilNomor();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Responsive.r(4)),
-              ),
-              padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(24),
-                vertical: Responsive.sp(12),
-              ),
-            ),
-            child: Text(
-              'Ya, Ambil Nomor',
-              style: TextStyle(
-                fontSize: Responsive.sp(16 * 0.8),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            style: AppButtonStyles.elevated(),
+            child: const Text('Ya, Ambil Nomor'),
           ),
         ],
       ),
@@ -187,16 +170,12 @@ class _TicketScreenState extends State<TicketScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.print,
-              size: Responsive.sp(64 * 0.8),
-              color: AppColors.navy,
-            ),
+            Icon(Icons.print, size: Responsive.sp(64), color: AppColors.navy),
             SizedBox(height: Responsive.h(16)),
             Text(
               'Tiket Sedang Dicetak...',
               style: TextStyle(
-                fontSize: Responsive.sp(20 * 0.8),
+                fontSize: Responsive.sp(20),
                 fontWeight: FontWeight.bold,
                 color: AppColors.navy,
               ),
@@ -205,15 +184,15 @@ class _TicketScreenState extends State<TicketScreen>
             Text(
               'Nomor Antrian: $nomorAntrian',
               style: TextStyle(
-                fontSize: Responsive.sp(16 * 0.8),
+                fontSize: Responsive.sp(16),
                 color: AppColors.textMuted,
               ),
             ),
-            SizedBox(height: Responsive.h(24)),
+            SizedBox(height: Responsive.h(14)),
             Text(
               'Silakan ambil tiket Anda',
               style: TextStyle(
-                fontSize: Responsive.sp(14 * 0.8),
+                fontSize: Responsive.sp(14),
                 color: AppColors.textMuted,
               ),
             ),
@@ -228,18 +207,8 @@ class _TicketScreenState extends State<TicketScreen>
                 Navigator.of(dialogContext).pop();
                 Navigator.of(context).pop();
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.navy,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Responsive.r(4)),
-                ),
-                padding: EdgeInsets.symmetric(vertical: Responsive.sp(14)),
-              ),
-              child: Text(
-                'Selesai',
-                style: TextStyle(fontSize: Responsive.sp(16 * 0.8)),
-              ),
+              style: AppButtonStyles.elevated(),
+              child: const Text('Selesai'),
             ),
           ),
         ],
@@ -287,18 +256,17 @@ class _TicketScreenState extends State<TicketScreen>
               children: [
                 Container(
                   width: double.infinity,
+                  height: 100,
                   padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + Responsive.h(12),
-                    bottom: Responsive.h(12),
                     left: Responsive.w(8),
-                    right: Responsive.w(16),
+                    right: Responsive.w(14),
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.navy,
                     border: Border(
                       bottom: BorderSide(
                         color: AppColors.gold,
-                        width: Responsive.h(4),
+                        width: Responsive.h(3),
                       ),
                     ),
                   ),
@@ -320,7 +288,8 @@ class _TicketScreenState extends State<TicketScreen>
                           '${widget.counter.name} - ${widget.counter.description}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: Responsive.sp(14),
+                            fontFamily: 'NunitoSans',
+                            fontSize: Responsive.sp(16),
                             fontWeight: FontWeight.bold,
                             color: AppColors.white,
                           ),
@@ -333,7 +302,7 @@ class _TicketScreenState extends State<TicketScreen>
                 Expanded(
                   child: Center(
                     child: Padding(
-                      padding: EdgeInsets.all(Responsive.w(32)),
+                      padding: EdgeInsets.all(Responsive.w(20)),
                       child: BlocBuilder<TicketCubit, TicketState>(
                         builder: (context, state) {
                           switch (state.status) {
@@ -368,18 +337,18 @@ class _TicketScreenState extends State<TicketScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          width: Responsive.w(80),
-          height: Responsive.w(80),
+          width: Responsive.w(56),
+          height: Responsive.w(56),
           child: CircularProgressIndicator(
-            strokeWidth: Responsive.w(6),
+            strokeWidth: Responsive.w(5),
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy),
           ),
         ),
-        SizedBox(height: Responsive.h(32)),
+        SizedBox(height: Responsive.h(18)),
         Text(
           'Memproses nomor antrian...',
           style: TextStyle(
-            fontSize: Responsive.sp(20 * 0.8),
+            fontSize: Responsive.sp(16),
             color: AppColors.navy,
             fontWeight: FontWeight.w500,
           ),
@@ -399,15 +368,15 @@ class _TicketScreenState extends State<TicketScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: Responsive.w(72),
-            height: Responsive.w(72),
+            width: Responsive.w(56),
+            height: Responsive.w(56),
             decoration: BoxDecoration(
               color: AppColors.navy,
               borderRadius: BorderRadius.circular(Responsive.r(4)),
               border: Border(
                 bottom: BorderSide(
                   color: AppColors.gold,
-                  width: Responsive.h(4),
+                  width: Responsive.h(3),
                 ),
               ),
             ),
@@ -415,34 +384,34 @@ class _TicketScreenState extends State<TicketScreen>
             child: Text(
               widget.counter.code,
               style: TextStyle(
-                fontSize: Responsive.sp(30 * 0.8),
+                fontSize: Responsive.sp(22),
                 fontWeight: FontWeight.bold,
                 color: AppColors.white,
               ),
             ),
           ),
-          SizedBox(height: Responsive.h(20)),
+          SizedBox(height: Responsive.h(14)),
           Text(
             widget.counter.name,
             style: TextStyle(
-              fontSize: Responsive.sp(36 * 0.8),
+              fontSize: Responsive.sp(26),
               fontWeight: FontWeight.bold,
               color: AppColors.navy,
             ),
           ),
-          SizedBox(height: Responsive.h(8)),
+          SizedBox(height: Responsive.h(4)),
           Text(
             widget.counter.description,
             style: TextStyle(
-              fontSize: Responsive.sp(18 * 0.8),
+              fontSize: Responsive.sp(14),
               color: AppColors.textMuted,
             ),
           ),
-          SizedBox(height: Responsive.h(20)),
+          SizedBox(height: Responsive.h(14)),
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: Responsive.w(24),
-              vertical: Responsive.h(14),
+              horizontal: Responsive.w(18),
+              vertical: Responsive.sp(10),
             ),
             decoration: BoxDecoration(
               color: AppColors.navy.withValues(alpha: 0.06),
@@ -457,7 +426,7 @@ class _TicketScreenState extends State<TicketScreen>
                     Text(
                       'Sedang Dilayani',
                       style: TextStyle(
-                        fontSize: Responsive.sp(12 * 0.8),
+                        fontSize: Responsive.sp(12),
                         color: AppColors.navy,
                       ),
                     ),
@@ -465,7 +434,7 @@ class _TicketScreenState extends State<TicketScreen>
                     Text(
                       nomorBerjalan,
                       style: TextStyle(
-                        fontSize: Responsive.sp(24 * 0.8),
+                        fontSize: Responsive.sp(20),
                         fontWeight: FontWeight.bold,
                         color: AppColors.navy,
                         fontFeatures: const [FontFeature.tabularFigures()],
@@ -475,8 +444,8 @@ class _TicketScreenState extends State<TicketScreen>
                 ),
                 Container(
                   width: 1,
-                  height: Responsive.h(40),
-                  margin: EdgeInsets.symmetric(horizontal: Responsive.w(20)),
+                  height: Responsive.h(32),
+                  margin: EdgeInsets.symmetric(horizontal: Responsive.w(14)),
                   color: AppColors.navy.withValues(alpha: 0.3),
                 ),
                 Column(
@@ -484,7 +453,7 @@ class _TicketScreenState extends State<TicketScreen>
                     Text(
                       'Sisa Antrian',
                       style: TextStyle(
-                        fontSize: Responsive.sp(12 * 0.8),
+                        fontSize: Responsive.sp(12),
                         color: AppColors.textMuted,
                       ),
                     ),
@@ -492,7 +461,7 @@ class _TicketScreenState extends State<TicketScreen>
                     Text(
                       '$sisaAntrian orang',
                       style: TextStyle(
-                        fontSize: Responsive.sp(20 * 0.8),
+                        fontSize: Responsive.sp(20),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textDark,
                         fontFeatures: const [FontFeature.tabularFigures()],
@@ -502,8 +471,8 @@ class _TicketScreenState extends State<TicketScreen>
                 ),
                 Container(
                   width: 1,
-                  height: Responsive.h(40),
-                  margin: EdgeInsets.symmetric(horizontal: Responsive.w(20)),
+                  height: Responsive.h(32),
+                  margin: EdgeInsets.symmetric(horizontal: Responsive.w(14)),
                   color: AppColors.navy.withValues(alpha: 0.3),
                 ),
                 Column(
@@ -511,7 +480,7 @@ class _TicketScreenState extends State<TicketScreen>
                     Text(
                       'Estimasi',
                       style: TextStyle(
-                        fontSize: Responsive.sp(12 * 0.8),
+                        fontSize: Responsive.sp(12),
                         color: AppColors.textMuted,
                       ),
                     ),
@@ -519,7 +488,7 @@ class _TicketScreenState extends State<TicketScreen>
                     Text(
                       '~$estimasiMenit mnt',
                       style: TextStyle(
-                        fontSize: Responsive.sp(20 * 0.8),
+                        fontSize: Responsive.sp(20),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textDark,
                         fontFeatures: const [FontFeature.tabularFigures()],
@@ -548,13 +517,13 @@ class _TicketScreenState extends State<TicketScreen>
                   Icon(
                     Icons.warning_amber,
                     color: AppColors.orange,
-                    size: Responsive.sp(20 * 0.8),
+                    size: Responsive.sp(20),
                   ),
                   SizedBox(width: Responsive.w(8)),
                   Text(
                     'Layanan Prioritas (Lansia, Disabilitas, Ibu Hamil)',
                     style: TextStyle(
-                      fontSize: Responsive.sp(14 * 0.8),
+                      fontSize: Responsive.sp(14),
                       color: AppColors.orange,
                       fontWeight: FontWeight.w500,
                     ),
@@ -563,44 +532,23 @@ class _TicketScreenState extends State<TicketScreen>
               ),
             ),
           ],
-          SizedBox(height: Responsive.h(28)),
+          SizedBox(height: Responsive.h(18)),
           SizedBox(
-            width: Responsive.w(280),
+            width: Responsive.w(260),
             child: ElevatedButton(
               onPressed: _showConfirmDialog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.navy,
-                foregroundColor: AppColors.white,
-                padding: EdgeInsets.symmetric(
-                  vertical: Responsive.sp(18 * 0.8),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Responsive.r(4)),
-                ),
-                elevation: 4,
-              ),
-              child: Text(
-                'Ambil Nomor Antrian',
-                style: TextStyle(
-                  fontSize: Responsive.sp(20 * 0.8),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              style: AppButtonStyles.elevated(),
+              child: const Text('Ambil Nomor Antrian'),
             ),
           ),
-          SizedBox(height: Responsive.h(16)),
+          SizedBox(height: Responsive.h(10)),
           TextButton(
             onPressed: () {
               AudioFeedback.tap();
               Navigator.of(context).pop();
             },
-            child: Text(
-              'Kembali',
-              style: TextStyle(
-                fontSize: Responsive.sp(16 * 0.8),
-                color: AppColors.textMuted,
-              ),
-            ),
+            style: AppButtonStyles.text(),
+            child: const Text('Kembali'),
           ),
         ],
       ),
@@ -618,22 +566,22 @@ class _TicketScreenState extends State<TicketScreen>
             Icon(
               Icons.check_circle,
               color: AppColors.green,
-              size: Responsive.sp(64 * 0.8),
+              size: Responsive.sp(48),
             ),
-            SizedBox(height: Responsive.h(16)),
+            SizedBox(height: Responsive.h(10)),
             Text(
               'Nomor Antrian Anda',
               style: TextStyle(
-                fontSize: Responsive.sp(20 * 0.8),
+                fontSize: Responsive.sp(16),
                 color: AppColors.textMuted,
               ),
             ),
-            SizedBox(height: Responsive.h(16)),
+            SizedBox(height: Responsive.h(10)),
             Container(
-              width: Responsive.w(280),
+              width: Responsive.w(260),
               padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(28),
-                vertical: Responsive.sp(20),
+                horizontal: Responsive.w(22),
+                vertical: Responsive.sp(14),
               ),
               decoration: BoxDecoration(
                 color: AppColors.white,
@@ -652,74 +600,56 @@ class _TicketScreenState extends State<TicketScreen>
                   Text(
                     widget.counter.name.toUpperCase(),
                     style: TextStyle(
-                      fontSize: Responsive.sp(12 * 0.8),
+                      fontSize: Responsive.sp(12),
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.6,
                       color: AppColors.textMuted,
                     ),
                   ),
-                  SizedBox(height: Responsive.h(10)),
+                  SizedBox(height: Responsive.h(8)),
                   Container(height: 1, color: AppColors.border),
-                  SizedBox(height: Responsive.h(14)),
+                  SizedBox(height: Responsive.h(10)),
                   Text(
                     nomorAntrian,
                     style: TextStyle(
-                      fontSize: Responsive.sp(48),
+                      fontSize: Responsive.sp(40),
                       fontWeight: FontWeight.bold,
                       color: AppColors.navy,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                  SizedBox(height: Responsive.h(6)),
+                  SizedBox(height: Responsive.h(4)),
                   Text(
                     widget.counter.description,
                     style: TextStyle(
-                      fontSize: Responsive.sp(14 * 0.8),
+                      fontSize: Responsive.sp(13),
                       color: AppColors.textMuted,
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: Responsive.h(20)),
+            SizedBox(height: Responsive.h(14)),
             SizedBox(
-              width: Responsive.w(280),
+              width: Responsive.w(260),
               child: ElevatedButton.icon(
                 onPressed: () => _cetakTiket(nomorAntrian),
-                icon: Icon(Icons.print, size: Responsive.sp(24 * 0.8)),
-                label: Text(
-                  'Cetak Tiket',
-                  style: TextStyle(
-                    fontSize: Responsive.sp(20 * 0.8),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gold,
-                  foregroundColor: AppColors.navy,
-                  padding: EdgeInsets.symmetric(
-                    vertical: Responsive.sp(18 * 0.8),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Responsive.r(4)),
-                  ),
-                  elevation: 4,
+                icon: const Icon(Icons.print),
+                label: const Text('Cetak Tiket'),
+                style: AppButtonStyles.elevated(
+                  background: AppColors.gold,
+                  foreground: AppColors.navy,
                 ),
               ),
             ),
-            SizedBox(height: Responsive.h(16)),
+            SizedBox(height: Responsive.h(10)),
             TextButton(
               onPressed: () {
                 AudioFeedback.tap();
                 Navigator.of(context).pop();
               },
-              child: Text(
-                'Kembali ke Menu Utama',
-                style: TextStyle(
-                  fontSize: Responsive.sp(16 * 0.8),
-                  color: AppColors.textMuted,
-                ),
-              ),
+              style: AppButtonStyles.text(),
+              child: const Text('Kembali ke Menu Utama'),
             ),
           ],
         ),

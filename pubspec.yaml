@@ -74,17 +74,26 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  # Outfit — brand font, matches the BPN Karawang display app (self-hosted
-  # there via @fontsource/outfit for offline reliability). Single variable
-  # font file covers all weights used.
+  # Nunito (body) + Nunito Sans (headers) — self-hosted variable fonts for
+  # offline reliability.
   fonts:
-    - family: Outfit
+    - family: Nunito
       fonts:
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Nunito-Variable.ttf
           weight: 400
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Nunito-Variable.ttf
           weight: 500
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Nunito-Variable.ttf
           weight: 600
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Nunito-Variable.ttf
+          weight: 700
+    - family: NunitoSans
+      fonts:
+        - asset: assets/fonts/NunitoSans-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/NunitoSans-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/NunitoSans-Variable.ttf
+          weight: 600
+        - asset: assets/fonts/NunitoSans-Variable.ttf
           weight: 700

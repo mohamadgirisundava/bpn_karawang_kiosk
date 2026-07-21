@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/realtime_service.dart';
 import '../../core/utils/audio_feedback.dart';
@@ -84,37 +85,56 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: const Row(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Responsive.r(4)),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.admin_panel_settings, color: AppColors.navy),
-            SizedBox(width: 8),
-            Text('Menu Admin', style: TextStyle(color: AppColors.navy)),
+            Icon(
+              Icons.admin_panel_settings,
+              color: AppColors.navy,
+              size: Responsive.sp(28),
+            ),
+            SizedBox(width: Responsive.w(8)),
+            Text(
+              'Menu Admin',
+              style: TextStyle(
+                fontSize: Responsive.sp(18),
+                fontWeight: FontWeight.bold,
+                color: AppColors.navy,
+              ),
+            ),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Masukkan PIN untuk mengakses pengaturan',
-              style: TextStyle(color: AppColors.textMuted),
+              style: TextStyle(
+                fontSize: Responsive.sp(14),
+                color: AppColors.textMuted,
+              ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: Responsive.h(16)),
             TextField(
               controller: pinController,
               keyboardType: TextInputType.number,
               obscureText: true,
               maxLength: 6,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 24, letterSpacing: 8),
+              style: TextStyle(
+                fontSize: Responsive.sp(24),
+                letterSpacing: Responsive.w(8),
+              ),
               decoration: InputDecoration(
                 hintText: '••••••',
                 counterText: '',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(Responsive.r(4)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(Responsive.r(4)),
                   borderSide: const BorderSide(color: AppColors.navy, width: 2),
                 ),
               ),
@@ -124,6 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
+            style: AppButtonStyles.text(),
             child: const Text('Batal'),
           ),
           ElevatedButton(
@@ -141,13 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+            style: AppButtonStyles.elevated(),
             child: const Text('Masuk'),
           ),
         ],
@@ -159,31 +174,72 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: const Row(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Responsive.r(4)),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.settings, color: AppColors.navy),
-            SizedBox(width: 8),
-            Text('Pengaturan', style: TextStyle(color: AppColors.navy)),
+            Icon(
+              Icons.settings,
+              color: AppColors.navy,
+              size: Responsive.sp(28),
+            ),
+            SizedBox(width: Responsive.w(8)),
+            Text(
+              'Pengaturan',
+              style: TextStyle(
+                fontSize: Responsive.sp(18),
+                fontWeight: FontWeight.bold,
+                color: AppColors.navy,
+              ),
+            ),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.exit_to_app, color: Colors.red),
-              title: const Text('Keluar Aplikasi'),
-              subtitle: const Text('Tutup aplikasi kiosk'),
+              leading: Icon(
+                Icons.exit_to_app,
+                color: Colors.red,
+                size: Responsive.sp(24),
+              ),
+              title: Text(
+                'Keluar Aplikasi',
+                style: TextStyle(fontSize: Responsive.sp(16)),
+              ),
+              subtitle: Text(
+                'Tutup aplikasi kiosk',
+                style: TextStyle(
+                  fontSize: Responsive.sp(13),
+                  color: AppColors.textMuted,
+                ),
+              ),
               onTap: () {
                 Navigator.of(dialogContext).pop();
                 _confirmExit();
               },
             ),
-            const Divider(),
+            SizedBox(height: Responsive.h(8)),
+            Container(height: 1, color: AppColors.border),
+            SizedBox(height: Responsive.h(8)),
             ListTile(
-              leading: const Icon(Icons.refresh, color: AppColors.navy),
-              title: const Text('Restart ke Idle'),
-              subtitle: const Text('Kembali ke layar awal'),
+              leading: Icon(
+                Icons.refresh,
+                color: AppColors.navy,
+                size: Responsive.sp(24),
+              ),
+              title: Text(
+                'Restart ke Idle',
+                style: TextStyle(fontSize: Responsive.sp(16)),
+              ),
+              subtitle: Text(
+                'Kembali ke layar awal',
+                style: TextStyle(
+                  fontSize: Responsive.sp(13),
+                  color: AppColors.textMuted,
+                ),
+              ),
               onTap: () {
                 Navigator.of(dialogContext).pop();
                 _goToIdle();
@@ -194,6 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
+            style: AppButtonStyles.text(),
             child: const Text('Tutup'),
           ),
         ],
@@ -205,27 +262,35 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: const Text('Keluar Aplikasi?'),
-        content: const Text(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Responsive.r(4)),
+        ),
+        title: Text(
+          'Keluar Aplikasi?',
+          style: TextStyle(
+            fontSize: Responsive.sp(18),
+            fontWeight: FontWeight.bold,
+            color: AppColors.navy,
+          ),
+        ),
+        content: Text(
           'Aplikasi kiosk akan ditutup. Pastikan ini memang diperlukan.',
+          style: TextStyle(
+            fontSize: Responsive.sp(14),
+            color: AppColors.textMuted,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
+            style: AppButtonStyles.text(),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () {
               SystemNavigator.pop();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+            style: AppButtonStyles.elevated(background: Colors.red),
             child: const Text('Keluar'),
           ),
         ],
@@ -251,28 +316,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHeader(),
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.all(Responsive.w(16)),
+                    padding: EdgeInsets.all(Responsive.w(14)),
                     child: Column(
                       children: [
                         Text(
                           'Pilih Jenis Layanan',
                           style: TextStyle(
-                            fontSize: Responsive.sp(22),
+                            fontSize: Responsive.sp(18),
                             fontWeight: FontWeight.bold,
                             color: AppColors.navy,
                           ),
                         ),
-                        SizedBox(height: Responsive.h(6)),
+                        SizedBox(height: Responsive.h(4)),
                         Text(
                           'Sentuh salah satu loket untuk mengambil nomor antrian',
                           style: TextStyle(
-                            fontSize: Responsive.sp(13),
+                            fontSize: Responsive.sp(12),
                             color: AppColors.textMuted,
                           ),
                         ),
-                        SizedBox(height: Responsive.h(20)),
-                        Expanded(child: _buildCounterGrid()),
                         SizedBox(height: Responsive.h(12)),
+                        Expanded(child: _buildCounterGrid()),
+                        SizedBox(height: Responsive.h(10)),
                         _buildInfoAntrianButton(),
                       ],
                     ),
@@ -287,45 +352,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader() {
-    final topPadding = MediaQuery.of(context).padding.top;
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.only(
-        top: topPadding + Responsive.h(12),
-        bottom: Responsive.h(12),
-        left: Responsive.w(16),
-        right: Responsive.w(16),
-      ),
+      height: 100,
+      padding: EdgeInsets.only(left: Responsive.w(14), right: Responsive.w(14)),
       decoration: BoxDecoration(
         color: AppColors.navy,
         border: Border(
-          bottom: BorderSide(color: AppColors.gold, width: Responsive.h(4)),
+          bottom: BorderSide(color: AppColors.gold, width: Responsive.h(3)),
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           GestureDetector(
             onLongPress: _showAdminMenu,
             child: Image.asset(
               'assets/images/bpn_karawang_logo.png',
-              width: Responsive.w(40),
-              height: Responsive.w(40),
+              width: Responsive.w(38),
+              height: Responsive.w(38),
               errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.account_balance,
                 color: AppColors.white,
-                size: Responsive.w(40),
+                size: Responsive.w(38),
               ),
             ),
           ),
-          SizedBox(width: Responsive.w(12)),
+          SizedBox(width: Responsive.w(10)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   'Kantor Pertanahan Kabupaten Karawang',
                   style: TextStyle(
-                    fontSize: Responsive.sp(14),
+                    fontFamily: 'NunitoSans',
+                    fontSize: Responsive.sp(15),
                     fontWeight: FontWeight.bold,
                     color: AppColors.white,
                   ),
@@ -333,6 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   'Sistem Antrian Digital',
                   style: TextStyle(
+                    fontFamily: 'NunitoSans',
                     fontSize: Responsive.sp(11),
                     color: AppColors.goldLight,
                   ),
@@ -387,22 +452,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(height: Responsive.h(24)),
                 ElevatedButton.icon(
                   onPressed: () => _counterCubit.loadCounters(),
-                  icon: Icon(Icons.refresh, size: Responsive.sp(20)),
-                  label: Text(
-                    'Coba Lagi',
-                    style: TextStyle(fontSize: Responsive.sp(15)),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(Responsive.r(4)),
-                    ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Responsive.w(28),
-                      vertical: Responsive.sp(16),
-                    ),
-                  ),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Coba Lagi'),
+                  style: AppButtonStyles.elevated(),
                 ),
               ],
             ),
@@ -423,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   'Belum Ada Layanan Tersedia',
                   style: TextStyle(
-                    fontSize: Responsive.sp(18),
+                    fontSize: Responsive.sp(20),
                     fontWeight: FontWeight.bold,
                     color: AppColors.navy,
                   ),
@@ -456,6 +508,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 (constraints.maxHeight - mainAxisSpacing * (rows - 1)) / rows;
 
             return GridView.builder(
+              padding: EdgeInsets.symmetric(horizontal: Responsive.w(50)),
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
@@ -486,15 +539,16 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () => _pilihCounter(counter),
         borderRadius: BorderRadius.circular(Responsive.r(4)),
         child: Container(
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(Responsive.r(4)),
             border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
-                color: AppColors.navy.withValues(alpha: 0.08),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
+                color: AppColors.navy.withValues(alpha: 0.14),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -583,6 +637,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  height: Responsive.h(4),
+                  color: AppColors.navy,
+                ),
+              ),
               if (counter.isPriority)
                 Positioned(
                   top: 0,
@@ -590,7 +653,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: Responsive.w(8),
-                      vertical: 3,
+                      vertical: Responsive.h(3),
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.orange,
@@ -621,19 +684,9 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _lihatInfoAntrian,
-        icon: Icon(Icons.info_outline, size: Responsive.sp(18)),
-        label: Text(
-          'Lihat Informasi Antrian Berjalan',
-          style: TextStyle(fontSize: Responsive.sp(13)),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.navy,
-          side: const BorderSide(color: AppColors.navy, width: 2),
-          padding: EdgeInsets.symmetric(vertical: Responsive.sp(14)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Responsive.r(4)),
-          ),
-        ),
+        icon: const Icon(Icons.info_outline),
+        label: const Text('Lihat Informasi Antrian Berjalan'),
+        style: AppButtonStyles.outlined(),
       ),
     );
   }

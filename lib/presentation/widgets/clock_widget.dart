@@ -75,11 +75,13 @@ class _ClockWidgetState extends State<ClockWidget> {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           _formattedTime,
           style: TextStyle(
-            fontSize: Responsive.sp(22 * 0.8),
+            fontFamily: 'NunitoSans',
+            fontSize: Responsive.sp(20),
             fontWeight: FontWeight.bold,
             color: AppColors.white,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -88,7 +90,8 @@ class _ClockWidgetState extends State<ClockWidget> {
         Text(
           _formattedDate,
           style: TextStyle(
-            fontSize: Responsive.sp(11 * 0.8),
+            fontFamily: 'NunitoSans',
+            fontSize: Responsive.sp(11),
             color: AppColors.goldLight,
           ),
         ),
