@@ -21,7 +21,13 @@ migrate_working_dir/
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
-#.vscode/
+.vscode/
+
+# Claude Code tooling — local session config and installed skills, not part
+# of the app.
+.claude/
+.agents/
+skills-lock.json
 
 # Flutter/Dart/Pub related
 **/doc/api/
