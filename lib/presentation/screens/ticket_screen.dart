@@ -68,13 +68,13 @@ class _TicketScreenState extends State<TicketScreen>
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(20)),
+          borderRadius: BorderRadius.circular(Responsive.r(4)),
         ),
         title: Row(
           children: [
             Icon(
               Icons.help_outline,
-              color: widget.counter.color,
+              color: AppColors.navy,
               size: Responsive.sp(28 * 0.8),
             ),
             SizedBox(width: Responsive.w(8)),
@@ -92,14 +92,14 @@ class _TicketScreenState extends State<TicketScreen>
         content: Container(
           padding: EdgeInsets.all(Responsive.w(16)),
           decoration: BoxDecoration(
-            color: widget.counter.color.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(Responsive.r(12)),
+            color: AppColors.navy.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(Responsive.r(4)),
           ),
           child: Row(
             children: [
               Icon(
                 widget.counter.icon,
-                color: widget.counter.color,
+                color: AppColors.navy,
                 size: Responsive.sp(40 * 0.8),
               ),
               SizedBox(width: Responsive.w(16)),
@@ -112,7 +112,7 @@ class _TicketScreenState extends State<TicketScreen>
                     style: TextStyle(
                       fontSize: Responsive.sp(20 * 0.8),
                       fontWeight: FontWeight.bold,
-                      color: widget.counter.color,
+                      color: AppColors.navy,
                     ),
                   ),
                   Text(
@@ -141,10 +141,10 @@ class _TicketScreenState extends State<TicketScreen>
               _ambilNomor();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: widget.counter.color,
+              backgroundColor: AppColors.navy,
               foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Responsive.r(12)),
+                borderRadius: BorderRadius.circular(Responsive.r(4)),
               ),
               padding: EdgeInsets.symmetric(
                 horizontal: Responsive.w(24),
@@ -183,7 +183,7 @@ class _TicketScreenState extends State<TicketScreen>
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(20)),
+          borderRadius: BorderRadius.circular(Responsive.r(4)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -233,7 +233,7 @@ class _TicketScreenState extends State<TicketScreen>
                 backgroundColor: AppColors.navy,
                 foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Responsive.r(12)),
+                  borderRadius: BorderRadius.circular(Responsive.r(4)),
                 ),
                 padding: EdgeInsets.symmetric(vertical: Responsive.h(14)),
               ),
@@ -295,10 +295,12 @@ class _TicketScreenState extends State<TicketScreen>
                     right: Responsive.w(16),
                   ),
                   decoration: BoxDecoration(
-                    color: widget.counter.color,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(Responsive.r(20)),
-                      bottomRight: Radius.circular(Responsive.r(20)),
+                    color: AppColors.navy,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColors.gold,
+                        width: Responsive.h(4),
+                      ),
                     ),
                   ),
                   child: Row(
@@ -371,7 +373,7 @@ class _TicketScreenState extends State<TicketScreen>
           height: Responsive.w(80),
           child: CircularProgressIndicator(
             strokeWidth: Responsive.w(6),
-            valueColor: AlwaysStoppedAnimation<Color>(widget.counter.color),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy),
           ),
         ),
         SizedBox(height: Responsive.h(32)),
@@ -379,7 +381,7 @@ class _TicketScreenState extends State<TicketScreen>
           'Memproses nomor antrian...',
           style: TextStyle(
             fontSize: Responsive.sp(20 * 0.8),
-            color: widget.counter.color,
+            color: AppColors.navy,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -392,30 +394,31 @@ class _TicketScreenState extends State<TicketScreen>
     final sisaAntrian = state.queueInfo?.waitingCount ?? 0;
     final estimasiMenit = sisaAntrian * state.estimatePerPerson;
 
-    return SingleChildScrollView(
+    return FittedBox(
+      fit: BoxFit.scaleDown,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: Responsive.w(120),
-            height: Responsive.w(120),
+            width: Responsive.w(90),
+            height: Responsive.w(90),
             decoration: BoxDecoration(
-              color: widget.counter.color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+              color: AppColors.navy.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(Responsive.r(4)),
             ),
             child: Icon(
               widget.counter.icon,
-              color: widget.counter.color,
-              size: Responsive.sp(60 * 0.8),
+              color: AppColors.navy,
+              size: Responsive.sp(45 * 0.8),
             ),
           ),
-          SizedBox(height: Responsive.h(32)),
+          SizedBox(height: Responsive.h(20)),
           Text(
             widget.counter.name,
             style: TextStyle(
               fontSize: Responsive.sp(36 * 0.8),
               fontWeight: FontWeight.bold,
-              color: widget.counter.color,
+              color: AppColors.navy,
             ),
           ),
           SizedBox(height: Responsive.h(8)),
@@ -433,11 +436,9 @@ class _TicketScreenState extends State<TicketScreen>
               vertical: Responsive.h(14),
             ),
             decoration: BoxDecoration(
-              color: widget.counter.color.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(Responsive.r(16)),
-              border: Border.all(
-                color: widget.counter.color.withValues(alpha: 0.2),
-              ),
+              color: AppColors.navy.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(Responsive.r(4)),
+              border: Border.all(color: AppColors.navy.withValues(alpha: 0.2)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -448,7 +449,7 @@ class _TicketScreenState extends State<TicketScreen>
                       'Sedang Dilayani',
                       style: TextStyle(
                         fontSize: Responsive.sp(12 * 0.8),
-                        color: widget.counter.color,
+                        color: AppColors.navy,
                       ),
                     ),
                     SizedBox(height: Responsive.h(4)),
@@ -457,7 +458,8 @@ class _TicketScreenState extends State<TicketScreen>
                       style: TextStyle(
                         fontSize: Responsive.sp(24 * 0.8),
                         fontWeight: FontWeight.bold,
-                        color: widget.counter.color,
+                        color: AppColors.navy,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
@@ -466,7 +468,7 @@ class _TicketScreenState extends State<TicketScreen>
                   width: 1,
                   height: Responsive.h(40),
                   margin: EdgeInsets.symmetric(horizontal: Responsive.w(20)),
-                  color: widget.counter.color.withValues(alpha: 0.3),
+                  color: AppColors.navy.withValues(alpha: 0.3),
                 ),
                 Column(
                   children: [
@@ -484,6 +486,7 @@ class _TicketScreenState extends State<TicketScreen>
                         fontSize: Responsive.sp(20 * 0.8),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textDark,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
@@ -492,7 +495,7 @@ class _TicketScreenState extends State<TicketScreen>
                   width: 1,
                   height: Responsive.h(40),
                   margin: EdgeInsets.symmetric(horizontal: Responsive.w(20)),
-                  color: widget.counter.color.withValues(alpha: 0.3),
+                  color: AppColors.navy.withValues(alpha: 0.3),
                 ),
                 Column(
                   children: [
@@ -510,6 +513,7 @@ class _TicketScreenState extends State<TicketScreen>
                         fontSize: Responsive.sp(20 * 0.8),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textDark,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
@@ -526,7 +530,7 @@ class _TicketScreenState extends State<TicketScreen>
               ),
               decoration: BoxDecoration(
                 color: AppColors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(Responsive.r(12)),
+                borderRadius: BorderRadius.circular(Responsive.r(4)),
                 border: Border.all(color: AppColors.orange),
               ),
               child: Row(
@@ -550,17 +554,17 @@ class _TicketScreenState extends State<TicketScreen>
               ),
             ),
           ],
-          SizedBox(height: Responsive.h(48)),
+          SizedBox(height: Responsive.h(28)),
           SizedBox(
             width: Responsive.w(280),
             height: Responsive.h(64),
             child: ElevatedButton(
               onPressed: _showConfirmDialog,
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.counter.color,
+                backgroundColor: AppColors.navy,
                 foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Responsive.r(20)),
+                  borderRadius: BorderRadius.circular(Responsive.r(4)),
                 ),
                 elevation: 4,
               ),
@@ -598,16 +602,17 @@ class _TicketScreenState extends State<TicketScreen>
 
     return ScaleTransition(
       scale: _scaleAnim,
-      child: SingleChildScrollView(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.check_circle,
               color: AppColors.green,
-              size: Responsive.sp(80 * 0.8),
+              size: Responsive.sp(64 * 0.8),
             ),
-            SizedBox(height: Responsive.h(24)),
+            SizedBox(height: Responsive.h(16)),
             Text(
               'Nomor Antrian Anda',
               style: TextStyle(
@@ -618,16 +623,16 @@ class _TicketScreenState extends State<TicketScreen>
             SizedBox(height: Responsive.h(16)),
             Container(
               padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(32),
-                vertical: Responsive.h(24),
+                horizontal: Responsive.w(28),
+                vertical: Responsive.h(18),
               ),
               decoration: BoxDecoration(
                 color: AppColors.white,
-                borderRadius: BorderRadius.circular(Responsive.r(24)),
-                border: Border.all(color: widget.counter.color, width: 3),
+                borderRadius: BorderRadius.circular(Responsive.r(4)),
+                border: Border.all(color: AppColors.navy, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.counter.color.withValues(alpha: 0.2),
+                    color: AppColors.navy.withValues(alpha: 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -639,7 +644,7 @@ class _TicketScreenState extends State<TicketScreen>
                     widget.counter.name,
                     style: TextStyle(
                       fontSize: Responsive.sp(18 * 0.8),
-                      color: widget.counter.color,
+                      color: AppColors.navy,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -649,7 +654,8 @@ class _TicketScreenState extends State<TicketScreen>
                     style: TextStyle(
                       fontSize: Responsive.sp(48),
                       fontWeight: FontWeight.bold,
-                      color: widget.counter.color,
+                      color: AppColors.navy,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                   SizedBox(height: Responsive.h(8)),
@@ -665,7 +671,7 @@ class _TicketScreenState extends State<TicketScreen>
                     padding: EdgeInsets.all(Responsive.w(8)),
                     decoration: BoxDecoration(
                       color: AppColors.white,
-                      borderRadius: BorderRadius.circular(Responsive.r(12)),
+                      borderRadius: BorderRadius.circular(Responsive.r(4)),
                       border: Border.all(color: Colors.grey.shade200),
                     ),
                     child: QrImageView(
@@ -674,7 +680,7 @@ class _TicketScreenState extends State<TicketScreen>
                       size: Responsive.w(100),
                       eyeStyle: QrEyeStyle(
                         eyeShape: QrEyeShape.square,
-                        color: widget.counter.color,
+                        color: AppColors.navy,
                       ),
                       dataModuleStyle: const QrDataModuleStyle(
                         dataModuleShape: QrDataModuleShape.square,
@@ -693,7 +699,7 @@ class _TicketScreenState extends State<TicketScreen>
                 ],
               ),
             ),
-            SizedBox(height: Responsive.h(32)),
+            SizedBox(height: Responsive.h(20)),
             SizedBox(
               width: Responsive.w(280),
               height: Responsive.h(64),
@@ -711,7 +717,7 @@ class _TicketScreenState extends State<TicketScreen>
                   backgroundColor: AppColors.gold,
                   foregroundColor: AppColors.navy,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Responsive.r(20)),
+                    borderRadius: BorderRadius.circular(Responsive.r(4)),
                   ),
                   elevation: 4,
                 ),

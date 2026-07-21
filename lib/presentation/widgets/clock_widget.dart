@@ -82,6 +82,7 @@ class _ClockWidgetState extends State<ClockWidget> {
             fontSize: Responsive.sp(22 * 0.8),
             fontWeight: FontWeight.bold,
             color: AppColors.white,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         Text(

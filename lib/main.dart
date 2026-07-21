@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
       title: 'BPN Karawang Kiosk',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: 'Outfit',
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.navy,
           primary: AppColors.navy,

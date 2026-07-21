@@ -46,9 +46,11 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
               ),
               decoration: BoxDecoration(
                 color: AppColors.navy,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(Responsive.r(20)),
-                  bottomRight: Radius.circular(Responsive.r(20)),
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.gold,
+                    width: Responsive.h(4),
+                  ),
                 ),
               ),
               child: Row(
@@ -137,8 +139,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                                   ),
                                   SizedBox(height: Responsive.h(16)),
                                   ElevatedButton.icon(
-                                    onPressed: () =>
-                                        _queueInfoCubit.loadData(),
+                                    onPressed: () => _queueInfoCubit.loadData(),
                                     icon: const Icon(Icons.refresh),
                                     label: const Text('Coba Lagi'),
                                     style: ElevatedButton.styleFrom(
@@ -163,13 +164,40 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                             );
                           }
 
-                          return ListView.separated(
-                            itemCount: state.counters.length,
-                            separatorBuilder: (_, __) =>
-                                SizedBox(height: Responsive.h(16)),
-                            itemBuilder: (context, index) {
-                              final counter = state.counters[index];
-                              return _buildQueueCard(counter, state);
+                          final crossAxisSpacing = Responsive.w(16);
+                          final mainAxisSpacing = Responsive.h(16);
+                          final columns = Responsive.gridColumns.clamp(
+                            1,
+                            state.counters.length,
+                          );
+                          final rows = (state.counters.length / columns).ceil();
+
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              final cellWidth =
+                                  (constraints.maxWidth -
+                                      crossAxisSpacing * (columns - 1)) /
+                                  columns;
+                              final cellHeight =
+                                  (constraints.maxHeight -
+                                      mainAxisSpacing * (rows - 1)) /
+                                  rows;
+
+                              return GridView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: columns,
+                                      crossAxisSpacing: crossAxisSpacing,
+                                      mainAxisSpacing: mainAxisSpacing,
+                                      childAspectRatio: cellWidth / cellHeight,
+                                    ),
+                                itemCount: state.counters.length,
+                                itemBuilder: (context, index) {
+                                  final counter = state.counters[index];
+                                  return _buildQueueCard(counter, state);
+                                },
+                              );
                             },
                           );
                         },
@@ -186,7 +214,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                           foregroundColor: AppColors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                              Responsive.r(16),
+                              Responsive.r(4),
                             ),
                           ),
                         ),
@@ -213,147 +241,126 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
     final estimasiMenit = sisaAntrian * state.estimatePerPerson;
 
     return Container(
-      padding: EdgeInsets.all(Responsive.w(20)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(Responsive.r(16)),
-        border: Border.all(
-          color: counter.color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        borderRadius: BorderRadius.circular(Responsive.r(4)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.navy.withValues(alpha: 0.08),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            width: Responsive.w(56),
-            height: Responsive.w(56),
-            decoration: BoxDecoration(
-              color: counter.color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              counter.icon,
-              color: counter.color,
-              size: Responsive.sp(28 * 0.8),
-            ),
-          ),
-          SizedBox(width: Responsive.w(16)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      counter.name,
-                      style: TextStyle(
-                        fontSize: Responsive.sp(18 * 0.8),
-                        fontWeight: FontWeight.bold,
-                        color: counter.color,
+          Positioned.fill(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.w(16),
+                vertical: Responsive.h(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    counter.name.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: Responsive.sp(12 * 0.8),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                      color: AppColors.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: Responsive.h(8)),
+                  Container(height: 1, color: AppColors.border),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        nomorSekarang,
+                        style: TextStyle(
+                          fontSize: Responsive.sp(30 * 0.8),
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.navy,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
                     ),
-                    if (counter.isPriority) ...[
-                      SizedBox(width: Responsive.w(8)),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.w(8),
-                          vertical: Responsive.h(2),
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.orange,
-                          borderRadius: BorderRadius.circular(Responsive.r(8)),
-                        ),
-                        child: Text(
-                          'PRIORITAS',
-                          style: TextStyle(
-                            fontSize: Responsive.sp(9 * 0.8),
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.people,
+                            size: Responsive.sp(12 * 0.8),
+                            color: AppColors.textMuted,
                           ),
-                        ),
+                          SizedBox(width: Responsive.w(3)),
+                          Text(
+                            '$sisaAntrian antrian',
+                            style: TextStyle(
+                              fontSize: Responsive.sp(10 * 0.8),
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            size: Responsive.sp(12 * 0.8),
+                            color: AppColors.textMuted,
+                          ),
+                          SizedBox(width: Responsive.w(3)),
+                          Text(
+                            '~$estimasiMenit menit',
+                            style: TextStyle(
+                              fontSize: Responsive.sp(10 * 0.8),
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ],
-                ),
-                SizedBox(height: Responsive.h(4)),
-                Text(
-                  counter.description,
-                  style: TextStyle(
-                    fontSize: Responsive.sp(13 * 0.8),
-                    color: AppColors.textMuted,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
+          if (counter.isPriority)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: Responsive.w(14),
-                  vertical: Responsive.h(8),
+                  horizontal: Responsive.w(8),
+                  vertical: 3,
                 ),
                 decoration: BoxDecoration(
-                  color: counter.color,
-                  borderRadius: BorderRadius.circular(Responsive.r(12)),
+                  color: AppColors.orange,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(Responsive.r(4)),
+                    bottomLeft: Radius.circular(Responsive.r(4)),
+                  ),
                 ),
                 child: Text(
-                  nomorSekarang,
+                  'PRIORITAS',
                   style: TextStyle(
-                    fontSize: Responsive.sp(20 * 0.8),
+                    fontSize: Responsive.sp(8 * 0.8),
                     fontWeight: FontWeight.bold,
                     color: AppColors.white,
                   ),
                 ),
               ),
-              SizedBox(height: Responsive.h(8)),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.people,
-                    size: Responsive.sp(14 * 0.8),
-                    color: AppColors.textMuted,
-                  ),
-                  SizedBox(width: Responsive.w(4)),
-                  Text(
-                    '$sisaAntrian antrian',
-                    style: TextStyle(
-                      fontSize: Responsive.sp(12 * 0.8),
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: Responsive.h(2)),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.access_time,
-                    size: Responsive.sp(14 * 0.8),
-                    color: AppColors.textMuted,
-                  ),
-                  SizedBox(width: Responsive.w(4)),
-                  Text(
-                    '~$estimasiMenit menit',
-                    style: TextStyle(
-                      fontSize: Responsive.sp(12 * 0.8),
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
         ],
       ),
     );

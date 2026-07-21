@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: const Row(
           children: [
             Icon(Icons.admin_panel_settings, color: AppColors.navy),
@@ -111,10 +111,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 hintText: '••••••',
                 counterText: '',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                   borderSide: const BorderSide(color: AppColors.navy, width: 2),
                 ),
               ),
@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: AppColors.navy,
               foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
             child: const Text('Masuk'),
@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: const Row(
           children: [
             Icon(Icons.settings, color: AppColors.navy),
@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: const Text('Keluar Aplikasi?'),
         content: const Text(
           'Aplikasi kiosk akan ditutup. Pastikan ini memang diperlukan.',
@@ -223,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: Colors.red,
               foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
             child: const Text('Keluar'),
@@ -298,9 +298,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       decoration: BoxDecoration(
         color: AppColors.navy,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(Responsive.r(20)),
-          bottomRight: Radius.circular(Responsive.r(20)),
+        border: Border(
+          bottom: BorderSide(color: AppColors.gold, width: Responsive.h(4)),
         ),
       ),
       child: Row(
@@ -308,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
           GestureDetector(
             onLongPress: _showAdminMenu,
             child: Image.asset(
-              'assets/images/bpn_karawang_logo.jpg',
+              'assets/images/bpn_karawang_logo.png',
               width: Responsive.w(40),
               height: Responsive.w(40),
               errorBuilder: (context, error, stackTrace) => Icon(
@@ -360,40 +359,48 @@ class _HomeScreenState extends State<HomeScreen> {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(Icons.cloud_off, size: 64, color: Colors.red.shade300),
-                const SizedBox(height: 16),
-                const Text(
+                Icon(
+                  Icons.cloud_off,
+                  size: Responsive.sp(64),
+                  color: Colors.red.shade300,
+                ),
+                SizedBox(height: Responsive.h(16)),
+                Text(
                   'Gagal Memuat Data Loket',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: Responsive.sp(20),
                     fontWeight: FontWeight.bold,
                     color: AppColors.navy,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: Responsive.h(8)),
                 Text(
                   state.errorMessage,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: Responsive.sp(14),
                     color: AppColors.textMuted,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: Responsive.h(24)),
                 ElevatedButton.icon(
                   onPressed: () => _counterCubit.loadCounters(),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Coba Lagi'),
+                  icon: Icon(Icons.refresh, size: Responsive.sp(20)),
+                  label: Text(
+                    'Coba Lagi',
+                    style: TextStyle(fontSize: Responsive.sp(15)),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.navy,
                     foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Responsive.r(4)),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Responsive.w(28),
+                      vertical: Responsive.h(16),
                     ),
                   ),
                 ),
@@ -409,40 +416,59 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(
                   Icons.info_outline,
-                  size: 64,
+                  size: Responsive.sp(64),
                   color: AppColors.textMuted.withValues(alpha: 0.6),
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: Responsive.h(16)),
+                Text(
                   'Belum Ada Layanan Tersedia',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: Responsive.sp(18),
                     fontWeight: FontWeight.bold,
                     color: AppColors.navy,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: Responsive.h(8)),
+                Text(
                   'Silakan hubungi petugas untuk informasi lebih lanjut.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+                  style: TextStyle(
+                    fontSize: Responsive.sp(14),
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ],
             ),
           );
         }
 
-        return GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: Responsive.gridColumns,
-            crossAxisSpacing: Responsive.w(12),
-            mainAxisSpacing: Responsive.h(12),
-            childAspectRatio: Responsive.isLandscape ? 1.4 : 1.1,
-          ),
-          itemCount: state.counters.length,
-          itemBuilder: (context, index) {
-            final counter = state.counters[index];
-            return _buildCounterCard(counter, state);
+        final crossAxisSpacing = Responsive.w(12);
+        final mainAxisSpacing = Responsive.h(12);
+        final columns = Responsive.gridColumns.clamp(1, state.counters.length);
+        final rows = (state.counters.length / columns).ceil();
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final cellWidth =
+                (constraints.maxWidth - crossAxisSpacing * (columns - 1)) /
+                columns;
+            final cellHeight =
+                (constraints.maxHeight - mainAxisSpacing * (rows - 1)) / rows;
+
+            return GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: crossAxisSpacing,
+                mainAxisSpacing: mainAxisSpacing,
+                childAspectRatio: cellWidth / cellHeight,
+              ),
+              itemCount: state.counters.length,
+              itemBuilder: (context, index) {
+                final counter = state.counters[index];
+                return _buildCounterCard(counter, state);
+              },
+            );
           },
         );
       },
@@ -458,41 +484,120 @@ class _HomeScreenState extends State<HomeScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _pilihCounter(counter),
-        borderRadius: BorderRadius.circular(Responsive.r(16)),
+        borderRadius: BorderRadius.circular(Responsive.r(4)),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(Responsive.r(16)),
-            border: Border.all(
-              color: counter.color.withValues(alpha: 0.3),
-              width: 2,
-            ),
+            borderRadius: BorderRadius.circular(Responsive.r(4)),
+            border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
-                color: counter.color.withValues(alpha: 0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: AppColors.navy.withValues(alpha: 0.08),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: Responsive.h(8),
-              horizontal: Responsive.w(6),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (counter.isPriority)
-                  Container(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: Responsive.h(8),
+                    horizontal: Responsive.w(6),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        counter.name,
+                        style: TextStyle(
+                          fontSize: Responsive.sp(14),
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.navy,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: Responsive.h(2)),
+                      Text(
+                        counter.description,
+                        style: TextStyle(
+                          fontSize: Responsive.sp(10),
+                          color: AppColors.textMuted,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: Responsive.h(8)),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.w(10),
+                          vertical: Responsive.h(4),
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(Responsive.r(4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.play_arrow,
+                              size: Responsive.sp(12),
+                              color: AppColors.textMuted,
+                            ),
+                            SizedBox(width: Responsive.w(3)),
+                            Text(
+                              nomorBerjalan,
+                              style: TextStyle(
+                                fontSize: Responsive.sp(11),
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textDark,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: Responsive.w(8)),
+                            Icon(
+                              Icons.people,
+                              size: Responsive.sp(12),
+                              color: AppColors.textMuted,
+                            ),
+                            SizedBox(width: Responsive.w(3)),
+                            Text(
+                              '$sisaAntrian antrian',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(10),
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (counter.isPriority)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: Responsive.w(8),
                       vertical: 3,
                     ),
-                    margin: EdgeInsets.only(bottom: Responsive.h(4)),
                     decoration: BoxDecoration(
                       color: AppColors.orange,
-                      borderRadius: BorderRadius.circular(Responsive.r(10)),
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(Responsive.r(4)),
+                        bottomLeft: Radius.circular(Responsive.r(4)),
+                      ),
                     ),
                     child: Text(
                       'PRIORITAS',
@@ -503,85 +608,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                Container(
-                  width: Responsive.w(40),
-                  height: Responsive.w(40),
-                  decoration: BoxDecoration(
-                    color: counter.color.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    counter.icon,
-                    color: counter.color,
-                    size: Responsive.sp(20),
-                  ),
                 ),
-                SizedBox(height: Responsive.h(6)),
-                Text(
-                  counter.name,
-                  style: TextStyle(
-                    fontSize: Responsive.sp(14),
-                    fontWeight: FontWeight.bold,
-                    color: counter.color,
-                  ),
-                ),
-                SizedBox(height: Responsive.h(2)),
-                Text(
-                  counter.description,
-                  style: TextStyle(
-                    fontSize: Responsive.sp(10),
-                    color: AppColors.textMuted,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: Responsive.h(8)),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: Responsive.w(10),
-                    vertical: Responsive.h(4),
-                  ),
-                  decoration: BoxDecoration(
-                    color: counter.color.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(Responsive.r(8)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.play_arrow,
-                        size: Responsive.sp(12),
-                        color: counter.color,
-                      ),
-                      SizedBox(width: Responsive.w(3)),
-                      Text(
-                        nomorBerjalan,
-                        style: TextStyle(
-                          fontSize: Responsive.sp(11),
-                          fontWeight: FontWeight.bold,
-                          color: counter.color,
-                        ),
-                      ),
-                      SizedBox(width: Responsive.w(8)),
-                      Icon(
-                        Icons.people,
-                        size: Responsive.sp(12),
-                        color: AppColors.textMuted,
-                      ),
-                      SizedBox(width: Responsive.w(3)),
-                      Text(
-                        '$sisaAntrian antrian',
-                        style: TextStyle(
-                          fontSize: Responsive.sp(10),
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -591,10 +619,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildInfoAntrianButton() {
     return SizedBox(
       width: double.infinity,
-      height: Responsive.h(44),
       child: OutlinedButton.icon(
         onPressed: _lihatInfoAntrian,
-        icon: const Icon(Icons.info_outline),
+        icon: Icon(Icons.info_outline, size: Responsive.sp(18)),
         label: Text(
           'Lihat Informasi Antrian Berjalan',
           style: TextStyle(fontSize: Responsive.sp(13)),
@@ -602,8 +629,9 @@ class _HomeScreenState extends State<HomeScreen> {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.navy,
           side: const BorderSide(color: AppColors.navy, width: 2),
+          padding: EdgeInsets.symmetric(vertical: Responsive.sp(14)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Responsive.r(12)),
+            borderRadius: BorderRadius.circular(Responsive.r(4)),
           ),
         ),
       ),

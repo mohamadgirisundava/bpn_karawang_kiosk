@@ -67,7 +67,7 @@ class _IdleScreenState extends State<IdleScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/bpn_karawang_logo.jpg',
+                    'assets/images/bpn_karawang_logo.png',
                     width: Responsive.w(160),
                     height: Responsive.w(160),
                     errorBuilder: (context, error, stackTrace) {
