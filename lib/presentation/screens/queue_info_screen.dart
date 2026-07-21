@@ -206,12 +206,14 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                     SizedBox(height: Responsive.h(16)),
                     SizedBox(
                       width: double.infinity,
-                      height: Responsive.h(56),
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.navy,
                           foregroundColor: AppColors.white,
+                          padding: EdgeInsets.symmetric(
+                            vertical: Responsive.sp(16 * 0.8),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
                               Responsive.r(4),

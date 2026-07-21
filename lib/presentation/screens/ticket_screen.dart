@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/sound_service.dart';
 import '../../core/utils/audio_feedback.dart';
@@ -148,7 +147,7 @@ class _TicketScreenState extends State<TicketScreen>
               ),
               padding: EdgeInsets.symmetric(
                 horizontal: Responsive.w(24),
-                vertical: Responsive.h(12),
+                vertical: Responsive.sp(12),
               ),
             ),
             child: Text(
@@ -191,7 +190,7 @@ class _TicketScreenState extends State<TicketScreen>
             Icon(
               Icons.print,
               size: Responsive.sp(64 * 0.8),
-              color: AppColors.green,
+              color: AppColors.navy,
             ),
             SizedBox(height: Responsive.h(16)),
             Text(
@@ -235,7 +234,7 @@ class _TicketScreenState extends State<TicketScreen>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(Responsive.r(4)),
                 ),
-                padding: EdgeInsets.symmetric(vertical: Responsive.h(14)),
+                padding: EdgeInsets.symmetric(vertical: Responsive.sp(14)),
               ),
               child: Text(
                 'Selesai',
@@ -400,16 +399,26 @@ class _TicketScreenState extends State<TicketScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: Responsive.w(90),
-            height: Responsive.w(90),
+            width: Responsive.w(72),
+            height: Responsive.w(72),
             decoration: BoxDecoration(
-              color: AppColors.navy.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(Responsive.r(4)),
-            ),
-            child: Icon(
-              widget.counter.icon,
               color: AppColors.navy,
-              size: Responsive.sp(45 * 0.8),
+              borderRadius: BorderRadius.circular(Responsive.r(4)),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.gold,
+                  width: Responsive.h(4),
+                ),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              widget.counter.code,
+              style: TextStyle(
+                fontSize: Responsive.sp(30 * 0.8),
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
+              ),
             ),
           ),
           SizedBox(height: Responsive.h(20)),
@@ -557,12 +566,14 @@ class _TicketScreenState extends State<TicketScreen>
           SizedBox(height: Responsive.h(28)),
           SizedBox(
             width: Responsive.w(280),
-            height: Responsive.h(64),
             child: ElevatedButton(
               onPressed: _showConfirmDialog,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.navy,
                 foregroundColor: AppColors.white,
+                padding: EdgeInsets.symmetric(
+                  vertical: Responsive.sp(18 * 0.8),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(Responsive.r(4)),
                 ),
@@ -597,9 +608,6 @@ class _TicketScreenState extends State<TicketScreen>
   }
 
   Widget _buildTicketView(String nomorAntrian) {
-    final qrData =
-        'LOKET:${widget.counter.id}|NOMOR:$nomorAntrian|WAKTU:${DateTime.now().toIso8601String()}';
-
     return ScaleTransition(
       scale: _scaleAnim,
       child: FittedBox(
@@ -622,33 +630,37 @@ class _TicketScreenState extends State<TicketScreen>
             ),
             SizedBox(height: Responsive.h(16)),
             Container(
+              width: Responsive.w(280),
               padding: EdgeInsets.symmetric(
                 horizontal: Responsive.w(28),
-                vertical: Responsive.h(18),
+                vertical: Responsive.sp(20),
               ),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(Responsive.r(4)),
-                border: Border.all(color: AppColors.navy, width: 3),
+                border: Border.all(color: AppColors.border),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: AppColors.navy.withValues(alpha: 0.08),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
               child: Column(
                 children: [
                   Text(
-                    widget.counter.name,
+                    widget.counter.name.toUpperCase(),
                     style: TextStyle(
-                      fontSize: Responsive.sp(18 * 0.8),
-                      color: AppColors.navy,
-                      fontWeight: FontWeight.w500,
+                      fontSize: Responsive.sp(12 * 0.8),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                      color: AppColors.textMuted,
                     ),
                   ),
-                  SizedBox(height: Responsive.h(8)),
+                  SizedBox(height: Responsive.h(10)),
+                  Container(height: 1, color: AppColors.border),
+                  SizedBox(height: Responsive.h(14)),
                   Text(
                     nomorAntrian,
                     style: TextStyle(
@@ -658,42 +670,12 @@ class _TicketScreenState extends State<TicketScreen>
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                  SizedBox(height: Responsive.h(8)),
+                  SizedBox(height: Responsive.h(6)),
                   Text(
                     widget.counter.description,
                     style: TextStyle(
                       fontSize: Responsive.sp(14 * 0.8),
                       color: AppColors.textMuted,
-                    ),
-                  ),
-                  SizedBox(height: Responsive.h(16)),
-                  Container(
-                    padding: EdgeInsets.all(Responsive.w(8)),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(Responsive.r(4)),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: QrImageView(
-                      data: qrData,
-                      version: QrVersions.auto,
-                      size: Responsive.w(100),
-                      eyeStyle: QrEyeStyle(
-                        eyeShape: QrEyeShape.square,
-                        color: AppColors.navy,
-                      ),
-                      dataModuleStyle: const QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.square,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: Responsive.h(8)),
-                  Text(
-                    'Scan QR di loket',
-                    style: TextStyle(
-                      fontSize: Responsive.sp(11 * 0.8),
-                      color: Colors.grey.shade500,
                     ),
                   ),
                 ],
@@ -702,7 +684,6 @@ class _TicketScreenState extends State<TicketScreen>
             SizedBox(height: Responsive.h(20)),
             SizedBox(
               width: Responsive.w(280),
-              height: Responsive.h(64),
               child: ElevatedButton.icon(
                 onPressed: () => _cetakTiket(nomorAntrian),
                 icon: Icon(Icons.print, size: Responsive.sp(24 * 0.8)),
@@ -716,6 +697,9 @@ class _TicketScreenState extends State<TicketScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.gold,
                   foregroundColor: AppColors.navy,
+                  padding: EdgeInsets.symmetric(
+                    vertical: Responsive.sp(18 * 0.8),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(Responsive.r(4)),
                   ),

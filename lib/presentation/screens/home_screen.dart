@@ -400,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     padding: EdgeInsets.symmetric(
                       horizontal: Responsive.w(28),
-                      vertical: Responsive.h(16),
+                      vertical: Responsive.sp(16),
                     ),
                   ),
                 ),
