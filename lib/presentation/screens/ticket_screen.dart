@@ -10,6 +10,7 @@ import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
 import '../cubits/ticket/ticket_cubit.dart';
 import '../cubits/ticket/ticket_state.dart';
+import '../widgets/app_footer.dart';
 
 /// Ticket Screen - Halaman konfirmasi & cetak tiket setelah memilih counter.
 class TicketScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _TicketScreenState extends State<TicketScreen>
 
   static const Duration _pageTimeout = Duration(seconds: 60);
   Timer? _timeoutTimer;
+  bool _printed = false;
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _TicketScreenState extends State<TicketScreen>
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
+      value: 1,
     );
     _scaleAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animController, curve: Curves.elasticOut),
@@ -60,95 +63,9 @@ class _TicketScreenState extends State<TicketScreen>
     });
   }
 
-  void _showConfirmDialog() {
-    AudioFeedback.tap();
-    _resetTimeout();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(4)),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.help_outline,
-              color: AppColors.navy,
-              size: Responsive.sp(28),
-            ),
-            SizedBox(width: Responsive.w(8)),
-            Expanded(
-              child: Text(
-                'Anda yakin ingin mengambil nomor antrian?',
-                style: TextStyle(
-                  fontSize: Responsive.sp(18),
-                  color: AppColors.navy,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Container(
-          padding: EdgeInsets.all(Responsive.w(16)),
-          decoration: BoxDecoration(
-            color: AppColors.navy.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(Responsive.r(4)),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                widget.counter.icon,
-                color: AppColors.navy,
-                size: Responsive.sp(40),
-              ),
-              SizedBox(width: Responsive.w(16)),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.counter.name,
-                    style: TextStyle(
-                      fontSize: Responsive.sp(20),
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                  Text(
-                    widget.counter.description,
-                    style: TextStyle(
-                      fontSize: Responsive.sp(14),
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            style: AppButtonStyles.text(),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              _ambilNomor();
-            },
-            style: AppButtonStyles.elevated(),
-            child: const Text('Ya, Ambil Nomor'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _ambilNomor() async {
-    AudioFeedback.action();
     _resetTimeout();
+    _animController.value = 0;
 
     _ticketCubit.takeTicket(
       counterId: widget.counter.id,
@@ -157,72 +74,82 @@ class _TicketScreenState extends State<TicketScreen>
   }
 
   void _cetakTiket(String nomorAntrian) {
-    AudioFeedback.success();
     _timeoutTimer?.cancel();
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.white,
+        elevation: 8,
+        shadowColor: AppColors.navy.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(4)),
+          borderRadius: BorderRadius.circular(Responsive.r(16)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.print, size: Responsive.sp(64), color: AppColors.navy),
+            SizedBox(
+              width: Responsive.w(64),
+              height: Responsive.w(64),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: Responsive.w(64),
+                    height: Responsive.w(64),
+                    child: CircularProgressIndicator(
+                      strokeWidth: Responsive.w(3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.gold,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.print,
+                    size: Responsive.sp(26),
+                    color: AppColors.navy,
+                  ),
+                ],
+              ),
+            ),
             SizedBox(height: Responsive.h(16)),
             Text(
               'Tiket Sedang Dicetak...',
               style: TextStyle(
-                fontSize: Responsive.sp(20),
+                fontSize: Responsive.sp(18),
                 fontWeight: FontWeight.bold,
                 color: AppColors.navy,
               ),
             ),
-            SizedBox(height: Responsive.h(8)),
+            SizedBox(height: Responsive.h(6)),
             Text(
-              'Nomor Antrian: $nomorAntrian',
-              style: TextStyle(
-                fontSize: Responsive.sp(16),
-                color: AppColors.textMuted,
-              ),
-            ),
-            SizedBox(height: Responsive.h(14)),
-            Text(
-              'Silakan ambil tiket Anda',
+              'Nomor Antrian $nomorAntrian',
               style: TextStyle(
                 fontSize: Responsive.sp(14),
                 color: AppColors.textMuted,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ],
         ),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                AudioFeedback.tap();
-                Navigator.of(dialogContext).pop();
-                Navigator.of(context).pop();
-              },
-              style: AppButtonStyles.elevated(),
-              child: const Text('Selesai'),
-            ),
-          ),
-        ],
       ),
     );
 
-    Future.delayed(const Duration(seconds: 10), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
-        if (mounted && Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
+      }
+      if (mounted) {
+        setState(() => _printed = true);
+        _resetTimeout();
       }
     });
+  }
+
+  void _selesai() {
+    AudioFeedback.tap();
+    Navigator.of(context).pop();
   }
 
   @override
@@ -239,7 +166,7 @@ class _TicketScreenState extends State<TicketScreen>
               SoundService.playSuccess();
               _animController.forward();
             } else if (state.status == TicketStatus.error) {
-              SoundService.playSuccess();
+              SoundService.playError();
               _animController.forward();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -272,17 +199,6 @@ class _TicketScreenState extends State<TicketScreen>
                   ),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: AppColors.white,
-                          size: Responsive.sp(20),
-                        ),
-                        onPressed: () {
-                          AudioFeedback.tap();
-                          Navigator.of(context).pop();
-                        },
-                      ),
                       Expanded(
                         child: Text(
                           '${widget.counter.name} - ${widget.counter.description}',
@@ -295,35 +211,82 @@ class _TicketScreenState extends State<TicketScreen>
                           ),
                         ),
                       ),
-                      SizedBox(width: Responsive.w(40)),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(Responsive.w(20)),
-                      child: BlocBuilder<TicketCubit, TicketState>(
-                        builder: (context, state) {
-                          switch (state.status) {
-                            case TicketStatus.confirm:
-                              return _buildConfirmView(state);
-                            case TicketStatus.loading:
-                              return _buildLoadingView();
-                            case TicketStatus.success:
-                              return _buildTicketView(
-                                state.ticket?.queueCode ?? '---',
-                              );
-                            case TicketStatus.error:
-                              return _buildTicketView(
-                                '${widget.counter.code}---',
-                              );
-                          }
-                        },
-                      ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Responsive.w(20),
+                      vertical: Responsive.h(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            AudioFeedback.tap();
+                            Navigator.of(context).pop();
+                          },
+                          borderRadius: BorderRadius.circular(Responsive.r(4)),
+                          enableFeedback: false,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: Responsive.w(8),
+                              vertical: Responsive.h(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.arrow_back,
+                                  size: Responsive.sp(15),
+                                  color: AppColors.navy,
+                                ),
+                                SizedBox(width: Responsive.w(6)),
+                                Text(
+                                  'Kembali ke pilihan loket',
+                                  style: TextStyle(
+                                    fontSize: Responsive.sp(13),
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: Responsive.w(560),
+                                maxHeight: Responsive.h(680),
+                              ),
+                              child: BlocBuilder<TicketCubit, TicketState>(
+                                builder: (context, state) {
+                                  switch (state.status) {
+                                    case TicketStatus.confirm:
+                                      return _buildTicketDetailView(state);
+                                    case TicketStatus.loading:
+                                      return _buildLoadingView();
+                                    case TicketStatus.success:
+                                      return _printed
+                                          ? _buildPrintedView(state)
+                                          : _buildTicketDetailView(state);
+                                    case TicketStatus.error:
+                                      return _buildErrorView(state);
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+                const AppFooter(),
               ],
             ),
           ),
@@ -357,303 +320,646 @@ class _TicketScreenState extends State<TicketScreen>
     );
   }
 
-  Widget _buildConfirmView(TicketState state) {
-    final nomorBerjalan = state.queueInfo?.currentServing ?? '-';
-    final sisaAntrian = state.queueInfo?.waitingCount ?? 0;
-    final estimasiMenit = sisaAntrian * state.estimatePerPerson;
-
+  Widget _buildErrorView(TicketState state) {
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: Responsive.w(56),
-            height: Responsive.w(56),
-            decoration: BoxDecoration(
-              color: AppColors.navy,
-              borderRadius: BorderRadius.circular(Responsive.r(4)),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.gold,
-                  width: Responsive.h(3),
-                ),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              widget.counter.code,
-              style: TextStyle(
-                fontSize: Responsive.sp(22),
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-            ),
+          Icon(
+            Icons.cloud_off,
+            size: Responsive.sp(48),
+            color: Colors.red.shade300,
           ),
-          SizedBox(height: Responsive.h(14)),
+          SizedBox(height: Responsive.h(12)),
           Text(
-            widget.counter.name,
+            'Gagal Mengambil Nomor Antrian',
             style: TextStyle(
-              fontSize: Responsive.sp(26),
+              fontSize: Responsive.sp(18),
               fontWeight: FontWeight.bold,
               color: AppColors.navy,
             ),
           ),
-          SizedBox(height: Responsive.h(4)),
+          SizedBox(height: Responsive.h(6)),
           Text(
-            widget.counter.description,
+            state.errorMessage,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: Responsive.sp(14),
+              fontSize: Responsive.sp(13),
               color: AppColors.textMuted,
             ),
           ),
-          SizedBox(height: Responsive.h(14)),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: Responsive.w(18),
-              vertical: Responsive.sp(10),
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.navy.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(Responsive.r(4)),
-              border: Border.all(color: AppColors.navy.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Column(
-                  children: [
-                    Text(
-                      'Sedang Dilayani',
-                      style: TextStyle(
-                        fontSize: Responsive.sp(12),
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    SizedBox(height: Responsive.h(4)),
-                    Text(
-                      nomorBerjalan,
-                      style: TextStyle(
-                        fontSize: Responsive.sp(20),
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.navy,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  width: 1,
-                  height: Responsive.h(32),
-                  margin: EdgeInsets.symmetric(horizontal: Responsive.w(14)),
-                  color: AppColors.navy.withValues(alpha: 0.3),
-                ),
-                Column(
-                  children: [
-                    Text(
-                      'Sisa Antrian',
-                      style: TextStyle(
-                        fontSize: Responsive.sp(12),
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    SizedBox(height: Responsive.h(4)),
-                    Text(
-                      '$sisaAntrian orang',
-                      style: TextStyle(
-                        fontSize: Responsive.sp(20),
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  width: 1,
-                  height: Responsive.h(32),
-                  margin: EdgeInsets.symmetric(horizontal: Responsive.w(14)),
-                  color: AppColors.navy.withValues(alpha: 0.3),
-                ),
-                Column(
-                  children: [
-                    Text(
-                      'Estimasi',
-                      style: TextStyle(
-                        fontSize: Responsive.sp(12),
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    SizedBox(height: Responsive.h(4)),
-                    Text(
-                      '~$estimasiMenit mnt',
-                      style: TextStyle(
-                        fontSize: Responsive.sp(20),
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (widget.counter.isPriority) ...[
-            SizedBox(height: Responsive.h(16)),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(16),
-                vertical: Responsive.h(8),
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(Responsive.r(4)),
-                border: Border.all(color: AppColors.orange),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.warning_amber,
-                    color: AppColors.orange,
-                    size: Responsive.sp(20),
-                  ),
-                  SizedBox(width: Responsive.w(8)),
-                  Text(
-                    'Layanan Prioritas (Lansia, Disabilitas, Ibu Hamil)',
-                    style: TextStyle(
-                      fontSize: Responsive.sp(14),
-                      color: AppColors.orange,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          SizedBox(height: Responsive.h(18)),
-          SizedBox(
-            width: Responsive.w(260),
-            child: ElevatedButton(
-              onPressed: _showConfirmDialog,
-              style: AppButtonStyles.elevated(),
-              child: const Text('Ambil Nomor Antrian'),
-            ),
-          ),
-          SizedBox(height: Responsive.h(10)),
-          TextButton(
-            onPressed: () {
-              AudioFeedback.tap();
-              Navigator.of(context).pop();
-            },
-            style: AppButtonStyles.text(),
-            child: const Text('Kembali'),
+          SizedBox(height: Responsive.h(16)),
+          ElevatedButton.icon(
+            onPressed: _ambilNomor,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Coba Lagi'),
+            style: AppButtonStyles.elevated(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTicketView(String nomorAntrian) {
+  Widget _buildTicketDetailView(TicketState state) {
+    final nomorBerjalan = state.queueInfo?.currentServing ?? '-';
+    final sisaAntrian = state.queueInfo?.waitingCount ?? 0;
+    final estimasiMenit = sisaAntrian * state.estimatePerPerson;
+    final hasTicket = state.ticket != null;
+    final nomorTiket = state.ticket?.queueCode ?? '-';
+    const cardWidth = 420.0;
+    const halfWidth = 209.0;
+
     return ScaleTransition(
       scale: _scaleAnim,
       child: FittedBox(
-        fit: BoxFit.scaleDown,
+        fit: BoxFit.contain,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.check_circle,
-              color: AppColors.green,
-              size: Responsive.sp(48),
-            ),
-            SizedBox(height: Responsive.h(10)),
-            Text(
-              'Nomor Antrian Anda',
-              style: TextStyle(
-                fontSize: Responsive.sp(16),
-                color: AppColors.textMuted,
-              ),
-            ),
-            SizedBox(height: Responsive.h(10)),
             Container(
-              width: Responsive.w(260),
+              width: Responsive.w(cardWidth),
               padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(22),
-                vertical: Responsive.sp(14),
+                horizontal: Responsive.w(16),
+                vertical: Responsive.h(14),
               ),
               decoration: BoxDecoration(
                 color: AppColors.white,
-                borderRadius: BorderRadius.circular(Responsive.r(4)),
                 border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(Responsive.r(12)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.08),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
+                    color: AppColors.navy.withValues(alpha: 0.16),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: Responsive.w(52),
+                    height: Responsive.w(52),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.navy,
+                      borderRadius: BorderRadius.circular(Responsive.r(12)),
+                    ),
+                    child: Text(
+                      widget.counter.code,
+                      style: TextStyle(
+                        fontSize: Responsive.sp(20),
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: Responsive.w(14)),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.counter.name.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: Responsive.sp(10),
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                            color: AppColors.textMuted,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: Responsive.h(2)),
+                        Text(
+                          widget.counter.description,
+                          style: TextStyle(
+                            fontSize: Responsive.sp(15),
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.navy,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: Responsive.h(12)),
+            Container(
+              width: Responsive.w(cardWidth),
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(Responsive.r(12)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.16),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    widget.counter.name.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: Responsive.sp(12),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.6,
-                      color: AppColors.textMuted,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: Responsive.w(halfWidth),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.w(12),
+                          vertical: Responsive.h(16),
+                        ),
+                        color: AppColors.white,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'SEDANG DILAYANI',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(9.5),
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.4,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            SizedBox(height: Responsive.h(6)),
+                            Text(
+                              nomorBerjalan,
+                              style: TextStyle(
+                                fontSize: Responsive.sp(26),
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.navy,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: Responsive.h(6)),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: Responsive.w(6),
+                                  height: Responsive.w(6),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                SizedBox(width: Responsive.w(5)),
+                                Text(
+                                  'Aktif',
+                                  style: TextStyle(
+                                    fontSize: Responsive.sp(10),
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      Container(
+                        width: Responsive.w(halfWidth),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.w(12),
+                          vertical: Responsive.h(16),
+                        ),
+                        color: hasTicket
+                            ? AppColors.gold.withValues(alpha: 0.28)
+                            : AppColors.lightBlue.withValues(alpha: 0.18),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              hasTicket ? 'NOMOR TIKET ANDA' : 'SISA ANTRIAN',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(9.5),
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.4,
+                                color: AppColors.navy,
+                              ),
+                            ),
+                            SizedBox(height: Responsive.h(6)),
+                            Text(
+                              hasTicket ? nomorTiket : '$sisaAntrian',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(26),
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.navy,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: Responsive.h(6)),
+                            Text(
+                              hasTicket ? 'Harap simpan nomor ini' : 'orang',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(9.5),
+                                color: AppColors.navy.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: Responsive.h(8)),
                   Container(height: 1, color: AppColors.border),
-                  SizedBox(height: Responsive.h(10)),
-                  Text(
-                    nomorAntrian,
-                    style: TextStyle(
-                      fontSize: Responsive.sp(40),
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.navy,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                  SizedBox(height: Responsive.h(4)),
-                  Text(
-                    widget.counter.description,
-                    style: TextStyle(
-                      fontSize: Responsive.sp(13),
-                      color: AppColors.textMuted,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: Responsive.w(halfWidth),
+                        color: AppColors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.w(12),
+                          vertical: Responsive.h(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: Responsive.sp(14),
+                              color: AppColors.lightBlue,
+                            ),
+                            SizedBox(width: Responsive.w(6)),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  hasTicket
+                                      ? 'Antrian sebelum Anda'
+                                      : 'Antrian saat ini',
+                                  style: TextStyle(
+                                    fontSize: Responsive.sp(9.5),
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                Text(
+                                  '$sisaAntrian orang',
+                                  style: TextStyle(
+                                    fontSize: Responsive.sp(11.5),
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textDark,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: Responsive.h(44),
+                        color: AppColors.border,
+                      ),
+                      Container(
+                        width: Responsive.w(halfWidth),
+                        color: AppColors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.w(12),
+                          vertical: Responsive.h(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: Responsive.sp(14),
+                              color: AppColors.orange,
+                            ),
+                            SizedBox(width: Responsive.w(6)),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Estimasi waktu tunggu',
+                                  style: TextStyle(
+                                    fontSize: Responsive.sp(9.5),
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                Text(
+                                  '± $estimasiMenit menit',
+                                  style: TextStyle(
+                                    fontSize: Responsive.sp(11.5),
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textDark,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            SizedBox(height: Responsive.h(14)),
-            SizedBox(
-              width: Responsive.w(260),
-              child: ElevatedButton.icon(
-                onPressed: () => _cetakTiket(nomorAntrian),
-                icon: const Icon(Icons.print),
-                label: const Text('Cetak Tiket'),
-                style: AppButtonStyles.elevated(
-                  background: AppColors.gold,
-                  foreground: AppColors.navy,
+            if (widget.counter.isPriority) ...[
+              SizedBox(height: Responsive.h(12)),
+              Container(
+                width: Responsive.w(cardWidth),
+                padding: EdgeInsets.symmetric(
+                  horizontal: Responsive.w(16),
+                  vertical: Responsive.h(8),
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(Responsive.r(4)),
+                  border: Border.all(color: AppColors.orange),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.warning_amber,
+                      color: AppColors.orange,
+                      size: Responsive.sp(18),
+                    ),
+                    SizedBox(width: Responsive.w(8)),
+                    Text(
+                      'Layanan Prioritas',
+                      style: TextStyle(
+                        fontSize: Responsive.sp(12.5),
+                        color: AppColors.orange,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ],
+            SizedBox(height: Responsive.h(16)),
+            SizedBox(
+              width: Responsive.w(cardWidth),
+              child: hasTicket
+                  ? ElevatedButton.icon(
+                      onPressed: () => _cetakTiket(nomorTiket),
+                      icon: const Icon(Icons.print),
+                      label: const Text('Cetak Tiket Antrian'),
+                      style: AppButtonStyles.elevated(),
+                    )
+                  : ElevatedButton.icon(
+                      onPressed: _ambilNomor,
+                      icon: null,
+                      label: const Text('Ambil Tiket'),
+                      style: AppButtonStyles.elevated(),
+                    ),
             ),
-            SizedBox(height: Responsive.h(10)),
-            TextButton(
-              onPressed: () {
-                AudioFeedback.tap();
-                Navigator.of(context).pop();
-              },
-              style: AppButtonStyles.text(),
-              child: const Text('Kembali ke Menu Utama'),
+            SizedBox(height: Responsive.h(8)),
+            Text(
+              hasTicket
+                  ? 'Perhatikan papan informasi antrian dan pastikan nomor Anda terdengar'
+                  : 'Nomor antrian akan diberikan setelah Anda menekan tombol di atas',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: Responsive.sp(11),
+                color: AppColors.textMuted,
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPrintedView(TicketState state) {
+    final nomorTiket = state.ticket?.queueCode ?? '-';
+    final sisaAntrian = state.queueInfo?.waitingCount ?? 0;
+    final now = DateTime.now();
+    final tanggal = '${now.day}/${now.month}/${now.year}';
+    final pukul =
+        '${now.hour.toString().padLeft(2, '0')}.${now.minute.toString().padLeft(2, '0')} WIB';
+    const cardWidth = 340.0;
+
+    return FittedBox(
+      fit: BoxFit.contain,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: Responsive.w(64),
+            height: Responsive.w(64),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.green.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.check_circle_outline,
+              size: Responsive.sp(36),
+              color: AppColors.green,
+            ),
+          ),
+          SizedBox(height: Responsive.h(14)),
+          Text(
+            'Tiket Berhasil Dicetak',
+            style: TextStyle(
+              fontSize: Responsive.sp(20),
+              fontWeight: FontWeight.bold,
+              color: AppColors.navy,
+            ),
+          ),
+          SizedBox(height: Responsive.h(4)),
+          Text(
+            'Ambil tiket dari mesin pencetak di bawah layar ini',
+            style: TextStyle(
+              fontSize: Responsive.sp(12.5),
+              color: AppColors.textMuted,
+            ),
+          ),
+          SizedBox(height: Responsive.h(18)),
+          Container(
+            width: Responsive.w(cardWidth),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(Responsive.r(12)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.navy.withValues(alpha: 0.16),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.w(16),
+                    vertical: Responsive.h(10),
+                  ),
+                  color: AppColors.navy,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'KANTOR PERTANAHAN',
+                        style: TextStyle(
+                          fontFamily: 'NunitoSans',
+                          fontSize: Responsive.sp(9),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: AppColors.goldLight,
+                        ),
+                      ),
+                      Text(
+                        widget.counter.description,
+                        style: TextStyle(
+                          fontFamily: 'NunitoSans',
+                          fontSize: Responsive.sp(14),
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.w(16),
+                    vertical: Responsive.h(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'NOMOR ANTRIAN ANDA',
+                        style: TextStyle(
+                          fontSize: Responsive.sp(10),
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      SizedBox(height: Responsive.h(6)),
+                      Text(
+                        nomorTiket,
+                        style: TextStyle(
+                          fontSize: Responsive.sp(36),
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.navy,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(height: 1, color: AppColors.border),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.w(16),
+                    vertical: Responsive.h(10),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTicketInfoRow('Tanggal', tanggal),
+                      SizedBox(height: Responsive.h(4)),
+                      _buildTicketInfoRow('Pukul', pukul),
+                      SizedBox(height: Responsive.h(4)),
+                      _buildTicketInfoRow(
+                        'Antrian sebelum Anda',
+                        '$sisaAntrian orang',
+                        valueColor: AppColors.orange,
+                      ),
+                    ],
+                  ),
+                ),
+                Container(height: 1, color: AppColors.border),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.w(16),
+                    vertical: Responsive.h(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: Responsive.sp(13),
+                        color: AppColors.textMuted,
+                      ),
+                      SizedBox(width: Responsive.w(6)),
+                      Flexible(
+                        child: Text(
+                          'Simpan tiket ini hingga nomor Anda dipanggil',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: Responsive.sp(11),
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: Responsive.h(20)),
+          SizedBox(
+            width: Responsive.w(cardWidth),
+            child: ElevatedButton(
+              onPressed: _selesai,
+              style: AppButtonStyles.elevated(),
+              child: const Text('Selesai'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTicketInfoRow(String label, String value, {Color? valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: Responsive.sp(12),
+            color: AppColors.textMuted,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: Responsive.sp(12.5),
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? AppColors.textDark,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
     );
   }
 }

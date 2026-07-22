@@ -7,6 +7,7 @@ import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
 import '../cubits/queue/queue_cubit.dart';
 import '../cubits/queue/queue_state.dart';
+import '../widgets/app_footer.dart';
 
 /// Queue Info Screen - Menampilkan informasi antrian berjalan
 /// dan estimasi sisa antrian untuk setiap counter.
@@ -217,6 +218,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                 ),
               ),
             ),
+            const AppFooter(),
           ],
         ),
       ),

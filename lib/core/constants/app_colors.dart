@@ -26,7 +26,7 @@ class AppColors {
 
   // Netral
   static const Color white = Colors.white;
-  static const Color background = Color(0xFFEEF2F6);
+  static const Color background = Color(0xFFEAECF0);
   static const Color textDark = Color(0xFF1B2E40);
   static const Color textMuted = Color(0xFF5C7488);
   static const Color border = Color(0xFFDBE3EA);

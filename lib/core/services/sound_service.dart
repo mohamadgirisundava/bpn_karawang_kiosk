@@ -19,7 +19,7 @@ class SoundService {
   static Future<void> playSuccess() async {
     await init();
     try {
-      await _player.play(AssetSource('audio/success.mp3'));
+      await _player.play(AssetSource('audio/success.wav'));
     } catch (_) {
       SystemSound.play(SystemSoundType.click);
       HapticFeedback.heavyImpact();
