@@ -1,5 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:pocketbase/pocketbase.dart';
 import '../../core/constants/app_colors.dart';
 import '../../domain/entities/counter_entity.dart';
 
@@ -15,17 +15,18 @@ class CounterModel extends CounterEntity {
     super.isPriority,
   });
 
-  /// Construct dari PocketBase RecordModel.
-  factory CounterModel.fromRecord(RecordModel record) {
-    final code = record.getStringValue('code');
-    final name = record.getStringValue('name');
-    final description = record.getStringValue('description');
-    final colorHex = record.getStringValue('color');
-    final iconName = record.getStringValue('icon');
-    final isPriority = record.getBoolValue('is_priority');
+  /// Construct dari Firestore DocumentSnapshot.
+  factory CounterModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+    final code = data['code'] as String? ?? '';
+    final name = data['name'] as String? ?? '';
+    final description = data['description'] as String? ?? '';
+    final colorHex = data['color'] as String? ?? '';
+    final iconName = data['icon'] as String? ?? '';
+    final isPriority = data['is_priority'] as bool? ?? false;
 
     return CounterModel(
-      id: record.id,
+      id: doc.id,
       code: code,
       name: name,
       description: description,

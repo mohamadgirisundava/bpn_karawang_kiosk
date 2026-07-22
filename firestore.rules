@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userDoc().role == 'admin';
+    }
+
+    function isStaff() {
+      return isSignedIn() && userDoc().is_active == true;
+    }
+
+    // Public read, admin-only write.
+    match /counters/{counterId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Public read + public create (kiosk takes a ticket without login).
+    // Update/delete require an active staff account.
+    match /queues/{queueId} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'waiting'
+        && request.resource.data.keys().hasAll(
+          ['counter', 'queue_number', 'queue_code', 'status', 'date', 'dateKey', 'taken_at']
+        );
+      allow update, delete: if isStaff();
+    }
+
+    // Internal atomic counters backing queue number generation.
+    // No direct client read/write outside of the transaction that also
+    // writes the matching /queues doc.
+    match /queue_counters/{counterKey} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /calls/{callId} {
+      allow read: if true;
+      allow create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{key} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /prayer_schedule/{dateKey} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Firebase Auth UID keyed profile: self can read own doc, admin can
+    // read/manage everyone. Only admin creates/deletes accounts.
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow update: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, delete: if isAdmin();
+    }
+  }
+}

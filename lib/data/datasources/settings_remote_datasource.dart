@@ -1,11 +1,10 @@
-import 'package:pocketbase/pocketbase.dart';
-import '../../core/services/pocketbase_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Remote data source untuk settings collection.
 class SettingsRemoteDatasource {
-  final PocketBase _pb;
+  final FirebaseFirestore _db;
 
-  SettingsRemoteDatasource() : _pb = PocketBaseService.instance.client;
+  SettingsRemoteDatasource() : _db = FirebaseFirestore.instance;
 
   static const Duration _timeout = Duration(seconds: 5);
 
@@ -22,16 +21,12 @@ class SettingsRemoteDatasource {
     }
 
     try {
-      final records = await _pb
-          .collection('settings')
-          .getFullList()
-          .timeout(_timeout);
+      final result = await _db.collection('settings').get().timeout(_timeout);
 
       _cache.clear();
-      for (final record in records) {
-        final key = record.getStringValue('key').trim();
-        final value = record.getStringValue('value').trim();
-        if (key.isNotEmpty) _cache[key] = value;
+      for (final doc in result.docs) {
+        final value = (doc.data()['value'] as String? ?? '').trim();
+        _cache[doc.id] = value;
       }
       _lastFetch = now;
     } catch (_) {

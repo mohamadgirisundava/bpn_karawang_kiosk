@@ -11,7 +11,7 @@ class CounterRepositoryImpl implements CounterRepository {
 
   @override
   Future<List<CounterEntity>> getActiveCounters() async {
-    final records = await datasource.getActiveCounters();
-    return records.map((r) => CounterModel.fromRecord(r)).toList();
+    final docs = await datasource.getActiveCounters();
+    return docs.map((d) => CounterModel.fromDoc(d)).toList();
   }
 }

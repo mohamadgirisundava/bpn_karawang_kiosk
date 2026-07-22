@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:pocketbase/pocketbase.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Bedakan "server nggak bisa dihubungi" dari error lain, biar pesan yang
 /// ditampilkan ke user selalu jelas penyebabnya — bukan cuma dump exception
@@ -9,17 +9,20 @@ String friendlyErrorMessage(Object error) {
     return 'Tidak dapat terhubung ke server. Periksa koneksi jaringan.';
   }
 
-  if (error is ClientException) {
-    // statusCode 0 = request nggak pernah sampai ke server sama sekali
-    // (server mati, salah alamat, jaringan putus, dll).
-    if (error.statusCode == 0) {
+  if (error is FirebaseException) {
+    // unavailable/deadline-exceeded = request nggak pernah sampai (koneksi
+    // putus, offline, dll), bukan ditolak server.
+    if (error.code == 'unavailable' || error.code == 'deadline-exceeded') {
       return 'Tidak dapat terhubung ke server. Periksa koneksi jaringan.';
     }
-    final message = error.response['message'] as String?;
+    if (error.code == 'permission-denied') {
+      return 'Server menolak permintaan: akses ditolak.';
+    }
+    final message = error.message;
     if (message != null && message.isNotEmpty) {
       return 'Server menolak permintaan: $message';
     }
-    return 'Terjadi kesalahan pada server (kode ${error.statusCode}).';
+    return 'Terjadi kesalahan pada server (${error.code}).';
   }
 
   return 'Terjadi kesalahan tak terduga. Coba lagi.';

@@ -1,25 +1,26 @@
-import 'package:pocketbase/pocketbase.dart';
-import '../../core/services/pocketbase_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Remote data source untuk counter collection.
 class CounterRemoteDatasource {
-  final PocketBase _pb;
+  final FirebaseFirestore _db;
 
-  CounterRemoteDatasource() : _pb = PocketBaseService.instance.client;
+  CounterRemoteDatasource() : _db = FirebaseFirestore.instance;
 
   static const Duration _timeout = Duration(seconds: 5);
 
   /// Ambil semua counter aktif, urut sort_order.
-  Future<List<RecordModel>> getActiveCounters() async {
-    final result = await _pb
+  Future<List<DocumentSnapshot<Map<String, dynamic>>>> getActiveCounters() async {
+    final result = await _db
         .collection('counters')
-        .getFullList(filter: 'is_active = true', sort: 'sort_order')
+        .where('is_active', isEqualTo: true)
+        .orderBy('sort_order')
+        .get()
         .timeout(_timeout);
-    return result;
+    return result.docs;
   }
 
   /// Ambil counter by ID.
-  Future<RecordModel> getCounter(String id) async {
-    return await _pb.collection('counters').getOne(id).timeout(_timeout);
+  Future<DocumentSnapshot<Map<String, dynamic>>> getCounter(String id) async {
+    return await _db.collection('counters').doc(id).get().timeout(_timeout);
   }
 }

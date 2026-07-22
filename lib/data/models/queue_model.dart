@@ -1,4 +1,4 @@
-import 'package:pocketbase/pocketbase.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/queue_entity.dart';
 
 /// Model data untuk queue, meng-extend entity.
@@ -17,20 +17,21 @@ class QueueModel extends QueueEntity {
     super.deskNumber,
   });
 
-  /// Construct dari PocketBase RecordModel.
-  factory QueueModel.fromRecord(RecordModel record) {
+  /// Construct dari Firestore DocumentSnapshot.
+  factory QueueModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
     return QueueModel(
-      id: record.id,
-      counterId: record.getStringValue('counter'),
-      queueNumber: record.getIntValue('queue_number'),
-      queueCode: record.getStringValue('queue_code'),
-      status: record.getStringValue('status'),
-      date: record.getStringValue('date'),
-      takenAt: record.getStringValue('taken_at'),
-      calledAt: record.getStringValue('called_at'),
-      completedAt: record.getStringValue('completed_at'),
-      calledBy: record.getStringValue('called_by'),
-      deskNumber: record.getStringValue('desk_number'),
+      id: doc.id,
+      counterId: data['counter'] as String? ?? '',
+      queueNumber: data['queue_number'] as int? ?? 0,
+      queueCode: data['queue_code'] as String? ?? '',
+      status: data['status'] as String? ?? '',
+      date: data['date'] as String? ?? '',
+      takenAt: data['taken_at'] as String?,
+      calledAt: data['called_at'] as String?,
+      completedAt: data['completed_at'] as String?,
+      calledBy: data['called_by'] as String?,
+      deskNumber: data['desk_number'] as String?,
     );
   }
 }

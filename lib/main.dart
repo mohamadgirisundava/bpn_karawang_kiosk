@@ -1,19 +1,28 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'core/constants/app_colors.dart';
-import 'core/services/pocketbase_service.dart';
+import 'firebase_options.dart';
 import 'injection.dart';
 import 'presentation/screens/idle_screen.dart';
+import 'presentation/widgets/kiosk_scaler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Kiosk selalu landscape — layar portrait (mis. profil default sebagian
+  // emulator/BlueStacks) bikin grid loket jatuh ke mode list satu kolom.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
   // Fullscreen kiosk mode
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  // Init PocketBase
-  await PocketBaseService.instance.init();
+  // Init Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Init dependency injection
   Injection.instance.init();
@@ -50,7 +59,7 @@ class MyApp extends StatelessWidget {
           data: MediaQuery.of(
             context,
           ).copyWith(textScaler: const TextScaler.linear(1.0)),
-          child: child!,
+          child: KioskScaler(child: child!),
         ),
       ),
       home: const IdleScreen(),

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "214387987071",
+    "project_id": "bpn-karawang-antrian",
+    "storage_bucket": "bpn-karawang-antrian.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214387987071:android:345f899be3ff9625e1254a",
+        "android_client_info": {
+          "package_name": "com.example.bpn_karawang_kiosk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKWPJ-JERkAwnwbmC28ST2HuVQ5fYjQZo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

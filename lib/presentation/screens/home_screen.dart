@@ -317,7 +317,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHeader(),
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.all(Responsive.w(100)),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Responsive.w(100),
+                      vertical: Responsive.h(40),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

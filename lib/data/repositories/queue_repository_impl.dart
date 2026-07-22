@@ -15,17 +15,12 @@ class QueueRepositoryImpl implements QueueRepository {
     required String counterId,
     required String counterCode,
   }) async {
-    final nextNumber = await datasource.getNextQueueNumber(counterId);
-    final queueCode = '$counterCode${nextNumber.toString().padLeft(3, '0')}';
-
-    final record = await datasource.createQueue(
+    final doc = await datasource.createQueue(
       counterId: counterId,
       counterCode: counterCode,
-      queueNumber: nextNumber,
-      queueCode: queueCode,
     );
 
-    return QueueModel.fromRecord(record);
+    return QueueModel.fromDoc(doc);
   }
 
   @override
@@ -35,7 +30,7 @@ class QueueRepositoryImpl implements QueueRepository {
       final waiting = await datasource.getWaitingCount(counterId);
 
       return QueueInfo(
-        currentServing: serving?.getStringValue('queue_code') ?? '-',
+        currentServing: serving?.data()?['queue_code'] as String? ?? '-',
         waitingCount: waiting,
       );
     } catch (_) {
