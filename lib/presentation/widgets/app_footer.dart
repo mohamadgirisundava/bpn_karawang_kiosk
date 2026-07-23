@@ -19,7 +19,7 @@ class AppFooter extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '© ${DateTime.now().year} Kantor Pertanahan Kabupaten Karawang',
+              '© ${DateTime.now().year} Badan Pertanahan Nasional Kabupaten Karawang',
               style: TextStyle(
                 fontFamily: 'NunitoSans',
                 fontSize: Responsive.sp(12),

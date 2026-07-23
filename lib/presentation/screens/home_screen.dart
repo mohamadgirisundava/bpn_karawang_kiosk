@@ -6,6 +6,7 @@ import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/realtime_service.dart';
 import '../../core/utils/audio_feedback.dart';
+import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
@@ -155,12 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _showSettingsDialog();
               } else {
                 Navigator.of(dialogContext).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('PIN salah'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                showErrorSnackbar(context, 'PIN salah');
               }
             },
             style: AppButtonStyles.elevated(),
@@ -202,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: Icon(
                 Icons.exit_to_app,
-                color: Colors.red,
+                color: AppColors.danger,
                 size: Responsive.sp(24),
               ),
               title: Text(
@@ -291,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               SystemNavigator.pop();
             },
-            style: AppButtonStyles.elevated(background: Colors.red),
+            style: AppButtonStyles.elevated(background: AppColors.danger),
             child: const Text('Keluar'),
           ),
         ],
@@ -303,56 +299,53 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     Responsive.init(context);
 
-    return PopScope(
-      canPop: false,
-      child: Listener(
-        onPointerDown: (_) => _resetIdleTimer(),
-        onPointerMove: (_) => _resetIdleTimer(),
-        child: BlocProvider.value(
-          value: _counterCubit,
-          child: Scaffold(
-            backgroundColor: AppColors.background,
-            body: Column(
-              children: [
-                _buildHeader(),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Responsive.w(100),
-                      vertical: Responsive.h(40),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pilih Jenis Layanan',
-                          style: TextStyle(
-                            fontSize: Responsive.sp(18),
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.navy,
-                          ),
+    return Listener(
+      onPointerDown: (_) => _resetIdleTimer(),
+      onPointerMove: (_) => _resetIdleTimer(),
+      child: BlocProvider.value(
+        value: _counterCubit,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.w(100),
+                    vertical: Responsive.h(40),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pilih Jenis Layanan',
+                        style: TextStyle(
+                          fontSize: Responsive.sp(18),
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.navy,
                         ),
-                        SizedBox(height: Responsive.h(4)),
-                        Text(
-                          'Sentuh salah satu loket untuk mengambil nomor antrian',
-                          style: TextStyle(
-                            fontSize: Responsive.sp(12),
-                            color: AppColors.textMuted,
-                          ),
+                      ),
+                      SizedBox(height: Responsive.h(4)),
+                      Text(
+                        'Sentuh salah satu loket untuk mengambil nomor antrian',
+                        style: TextStyle(
+                          fontSize: Responsive.sp(12),
+                          color: AppColors.textMuted,
                         ),
-                        SizedBox(height: Responsive.h(24)),
-                        Expanded(child: _buildCounterGrid()),
-                        SizedBox(height: Responsive.h(10)),
-                        // _buildInfoBanner(),
-                        // SizedBox(height: Responsive.h(8)),
-                        // _buildInfoAntrianButton(),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: Responsive.h(24)),
+                      Expanded(child: _buildCounterGrid()),
+                      SizedBox(height: Responsive.h(10)),
+                      // _buildInfoBanner(),
+                      // SizedBox(height: Responsive.h(8)),
+                      // _buildInfoAntrianButton(),
+                    ],
                   ),
                 ),
-                const AppFooter(),
-              ],
-            ),
+              ),
+              const AppFooter(),
+            ],
           ),
         ),
       ),
@@ -428,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Kantor Pertanahan Kabupaten Karawang',
+                  'BPN KABUPATEN KARAWANG',
                   style: TextStyle(
                     fontFamily: 'NunitoSans',
                     fontSize: Responsive.sp(15),
@@ -448,6 +441,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const ClockWidget(),
+          SizedBox(width: Responsive.w(10)),
+          Container(
+            height: Responsive.h(32),
+            width: 1,
+            color: AppColors.white.withValues(alpha: 0.25),
+          ),
+          IconButton(
+            onPressed: _confirmExit,
+            tooltip: 'Keluar Aplikasi',
+            icon: Icon(
+              Icons.logout,
+              color: AppColors.white,
+              size: Responsive.sp(22),
+            ),
+          ),
         ],
       ),
     );

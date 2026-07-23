@@ -5,6 +5,7 @@ import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/sound_service.dart';
 import '../../core/utils/audio_feedback.dart';
+import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
@@ -168,12 +169,10 @@ class _TicketScreenState extends State<TicketScreen>
             } else if (state.status == TicketStatus.error) {
               SoundService.playError();
               _animController.forward();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Gagal: ${state.errorMessage}'),
-                  backgroundColor: Colors.orange,
-                  duration: const Duration(seconds: 5),
-                ),
+              showErrorSnackbar(
+                context,
+                'Gagal: ${state.errorMessage}',
+                duration: const Duration(seconds: 5),
               );
             }
           },
