@@ -305,15 +305,15 @@ class _HomeScreenState extends State<HomeScreen> {
       child: BlocProvider.value(
         value: _counterCubit,
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.background.withOpacity(0.4),
           body: Column(
             children: [
               _buildHeader(),
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: Responsive.w(100),
-                    vertical: Responsive.h(40),
+                    horizontal: Responsive.w(150),
+                    vertical: Responsive.h(100),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(Responsive.r(16)),
+            borderRadius: BorderRadius.circular(Responsive.r(0)),
             border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(

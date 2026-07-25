@@ -85,14 +85,14 @@ class _TicketScreenState extends State<TicketScreen>
         elevation: 8,
         shadowColor: AppColors.navy.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(16)),
+          borderRadius: BorderRadius.circular(Responsive.r(2)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: Responsive.w(64),
-              height: Responsive.w(64),
+              width: Responsive.w(84),
+              height: Responsive.w(84),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -177,7 +177,7 @@ class _TicketScreenState extends State<TicketScreen>
             }
           },
           child: Scaffold(
-            backgroundColor: AppColors.background,
+            backgroundColor: AppColors.background.withOpacity(0.4),
             body: Column(
               children: [
                 Container(
@@ -385,7 +385,7 @@ class _TicketScreenState extends State<TicketScreen>
               decoration: BoxDecoration(
                 color: AppColors.white,
                 border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(Responsive.r(12)),
+                borderRadius: BorderRadius.circular(Responsive.r(2)),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.navy.withValues(alpha: 0.16),
@@ -402,7 +402,7 @@ class _TicketScreenState extends State<TicketScreen>
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: AppColors.navy,
-                      borderRadius: BorderRadius.circular(Responsive.r(12)),
+                      borderRadius: BorderRadius.circular(Responsive.r(2)),
                     ),
                     child: Text(
                       widget.counter.code,
@@ -454,7 +454,7 @@ class _TicketScreenState extends State<TicketScreen>
               decoration: BoxDecoration(
                 color: AppColors.white,
                 border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(Responsive.r(12)),
+                borderRadius: BorderRadius.circular(Responsive.r(2)),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.navy.withValues(alpha: 0.16),
@@ -795,7 +795,7 @@ class _TicketScreenState extends State<TicketScreen>
             decoration: BoxDecoration(
               color: AppColors.white,
               border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(Responsive.r(12)),
+              borderRadius: BorderRadius.circular(Responsive.r(2)),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.navy.withValues(alpha: 0.16),

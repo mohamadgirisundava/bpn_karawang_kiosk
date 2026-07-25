@@ -24,7 +24,7 @@ class AppButtonStyles {
         vertical: Responsive.sp(12),
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Responsive.r(14)),
+        borderRadius: BorderRadius.circular(Responsive.r(2)),
       ),
       textStyle: TextStyle(
         fontFamily: 'Nunito',
@@ -46,7 +46,7 @@ class AppButtonStyles {
         vertical: Responsive.sp(12),
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Responsive.r(14)),
+        borderRadius: BorderRadius.circular(Responsive.r(2)),
       ),
       textStyle: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.sp(16)),
       iconSize: Responsive.sp(20),
