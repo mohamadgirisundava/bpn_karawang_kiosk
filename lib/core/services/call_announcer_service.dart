@@ -1,0 +1,215 @@
+import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+const List<String> _ones = [
+  '',
+  'satu',
+  'dua',
+  'tiga',
+  'empat',
+  'lima',
+  'enam',
+  'tujuh',
+  'delapan',
+  'sembilan',
+];
+const List<String> _teens = [
+  'sepuluh',
+  'sebelas',
+  'dua belas',
+  'tiga belas',
+  'empat belas',
+  'lima belas',
+  'enam belas',
+  'tujuh belas',
+  'delapan belas',
+  'sembilan belas',
+];
+const List<String> _tens = [
+  '',
+  '',
+  'dua puluh',
+  'tiga puluh',
+  'empat puluh',
+  'lima puluh',
+  'enam puluh',
+  'tujuh puluh',
+  'delapan puluh',
+  'sembilan puluh',
+];
+
+/// Angka ke kata Bahasa Indonesia ("1" -> "satu", "10" -> "sepuluh", "100"
+/// -> "seratus") — dibaca sebagai angka utuh, bukan dieja digit-per-digit
+/// (yang kedengeran berulang-ulang dan sebagian mesin TTS ngucapin "nol"
+/// yang jelek/bergetar — sudah dites di app Display).
+String _numberToWords(int n) {
+  if (n == 0) return 'nol';
+  if (n < 10) return _ones[n];
+  if (n < 20) return _teens[n - 10];
+  if (n < 100) {
+    final tens = n ~/ 10;
+    final ones = n % 10;
+    return ones == 0 ? _tens[tens] : '${_tens[tens]} ${_ones[ones]}';
+  }
+  if (n < 1000) {
+    final hundreds = n ~/ 100;
+    final rest = n % 100;
+    final hundredsWord = hundreds == 1 ? 'seratus' : '${_ones[hundreds]} ratus';
+    return rest == 0 ? hundredsWord : '$hundredsWord ${_numberToWords(rest)}';
+  }
+  final thousands = n ~/ 1000;
+  final rest = n % 1000;
+  final thousandsWord = thousands == 1 ? 'seribu' : '${_numberToWords(thousands)} ribu';
+  return rest == 0 ? thousandsWord : '$thousandsWord ${_numberToWords(rest)}';
+}
+
+/// Pisah kode antrian jadi huruf loket + nomor ("A001" -> "A" + 1).
+({String prefix, int? number}) _parseQueueCode(String code) {
+  final match = RegExp(r'^([A-Za-z]*)0*(\d+)$').firstMatch(code);
+  if (match == null) return (prefix: '', number: null);
+  return (prefix: match.group(1)!.toUpperCase(), number: int.parse(match.group(2)!));
+}
+
+/// Baca field angka dari data Firestore secara toleran — beberapa dokumen
+/// bisa nyimpen angka sebagai string (input manual lewat Console), bukan
+/// number asli.
+int _asInt(dynamic value, {int fallback = 0}) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? fallback;
+  return fallback;
+}
+
+String _buildAnnouncementText(Map<String, dynamic> data) {
+  final code = data['queue_code'] as String? ?? '';
+  final parsed = _parseQueueCode(code);
+  final spokenNumber = parsed.number == null ? code : _numberToWords(parsed.number!);
+  final spokenCode = parsed.prefix.isNotEmpty ? '${parsed.prefix}, $spokenNumber' : spokenNumber;
+  final deskNumber = _asInt(data['desk_number']);
+  final desk = deskNumber != 0 ? ', silakan menuju loket $deskNumber' : '';
+  return 'Nomor antrian $spokenCode$desk';
+}
+
+/// Bunyiin chime + suara "Nomor antrian..." tiap ada panggilan baru
+/// (collection `calls`, `is_active == true`). Speaker fisik kiosk-lah
+/// yang beneran kepake buat pengumuman ini (bukan TV Display) — makanya
+/// logic-nya taruh di sini, pakai audio/TTS native Flutter
+/// (`audioplayers` + `flutter_tts`) bukan Web Speech API kayak versi
+/// Display, jadi nggak kena masalah autoplay policy / daftar voice
+/// kosong / force-dark yang bikin ribet di browser.
+class CallAnnouncerService {
+  CallAnnouncerService._();
+  static final CallAnnouncerService instance = CallAnnouncerService._();
+
+  final AudioPlayer _chimePlayer = AudioPlayer();
+  final FlutterTts _tts = FlutterTts();
+
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
+  String? _lastAnnouncedCallId;
+  bool _ttsReady = false;
+
+  // Antrian pengumuman — kalau ada beberapa loket manggil hampir
+  // bersamaan, diproses satu-satu berurutan biar nggak saling motong
+  // (TTS cuma bisa ngomong satu hal dalam satu waktu).
+  final List<Map<String, dynamic>> _queue = [];
+  bool _processing = false;
+
+  Future<void> _ensureTtsReady() async {
+    if (_ttsReady) return;
+    _ttsReady = true;
+    try {
+      await _tts.awaitSpeakCompletion(true);
+      await _tts.setLanguage('id-ID');
+      await _tts.setSpeechRate(0.45);
+      await _tts.setVolume(1.0);
+    } catch (e) {
+      debugPrint('CallAnnouncerService: gagal setup TTS: $e');
+    }
+  }
+
+  /// Mulai dengerin panggilan baru. Aman dipanggil berkali-kali (no-op
+  /// kalau udah jalan).
+  Future<void> start() async {
+    if (_sub != null) return;
+
+    await _chimePlayer.setReleaseMode(ReleaseMode.stop);
+    await _ensureTtsReady();
+
+    _sub = FirebaseFirestore.instance
+        .collection('calls')
+        .where('is_active', isEqualTo: true)
+        .orderBy('called_at', descending: true)
+        .limit(1)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            if (snapshot.docs.isEmpty) return;
+            final doc = snapshot.docs.first;
+            if (doc.id == _lastAnnouncedCallId) return;
+            _lastAnnouncedCallId = doc.id;
+            _queue.add(doc.data());
+            unawaited(_processQueue());
+          },
+          onError: (Object e) => debugPrint('CallAnnouncerService: listen error: $e'),
+        );
+  }
+
+  Future<void> stop() async {
+    await _sub?.cancel();
+    _sub = null;
+    _queue.clear();
+  }
+
+  Future<void> _processQueue() async {
+    if (_processing) return;
+    _processing = true;
+    try {
+      while (_queue.isNotEmpty) {
+        final data = _queue.removeAt(0);
+        await _playChime();
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        await _speak(_buildAnnouncementText(data));
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      }
+    } finally {
+      _processing = false;
+    }
+  }
+
+  Future<void> _playChime() {
+    final completer = Completer<void>();
+    late final StreamSubscription<void> sub;
+    sub = _chimePlayer.onPlayerComplete.listen((_) {
+      sub.cancel();
+      if (!completer.isCompleted) completer.complete();
+    });
+
+    _chimePlayer.play(AssetSource('audio/chime.wav'), volume: 0.8).catchError((Object e) {
+      debugPrint('CallAnnouncerService: gagal muter chime: $e');
+      sub.cancel();
+      if (!completer.isCompleted) completer.complete();
+    });
+
+    // Jaring pengaman kalau onPlayerComplete nggak pernah nyala.
+    unawaited(
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        sub.cancel();
+        if (!completer.isCompleted) completer.complete();
+      }),
+    );
+
+    return completer.future;
+  }
+
+  Future<void> _speak(String text) async {
+    try {
+      await _ensureTtsReady();
+      await _tts.speak(text);
+    } catch (e) {
+      debugPrint('CallAnnouncerService: gagal ngomong: $e');
+    }
+  }
+}

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'core/constants/app_colors.dart';
+import 'core/services/call_announcer_service.dart';
 import 'firebase_options.dart';
 import 'injection.dart';
 import 'presentation/screens/idle_screen.dart';
@@ -26,6 +29,13 @@ void main() async {
 
   // Init dependency injection
   Injection.instance.init();
+
+  // Speaker fisik kiosk-lah yang beneran kepake buat pengumuman "nomor
+  // antrian..." (bukan TV Display) — jalanin di sini, global, nggak
+  // terikat ke lifecycle satu screen tertentu, biar tetep bunyi walau
+  // kiosk lagi di idle screen. Sengaja nggak di-await, sama kayak
+  // RealtimeService — jangan sampai nge-block first paint.
+  unawaited(CallAnnouncerService.instance.start());
 
   runApp(const MyApp());
 }
