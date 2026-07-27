@@ -24,6 +24,24 @@ class QueueRepositoryImpl implements QueueRepository {
   }
 
   @override
+  Future<String> createPrintJob({
+    required String queueCode,
+    required String counterName,
+    required String takenAt,
+  }) {
+    return datasource.createPrintJob(
+      queueCode: queueCode,
+      counterName: counterName,
+      takenAt: takenAt,
+    );
+  }
+
+  @override
+  Stream<String> watchPrintJobStatus(String printJobId) {
+    return datasource.watchPrintJobStatus(printJobId);
+  }
+
+  @override
   Future<QueueInfo> getQueueInfo(String counterId) async {
     try {
       final serving = await datasource.getCurrentServing(counterId);

@@ -44,6 +44,20 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // Antrian job cetak tiket fisik. Dibuat publik oleh kiosk (sama seperti
+    // /queues) tanpa login; diproses & ditandai selesai oleh helper Windows
+    // yang juga jalan tanpa login (nggak ada akun khusus untuk itu), makanya
+    // update/delete di sini publik juga — datanya cuma kode antrian & nama
+    // loket, bukan data sensitif.
+    match /print_jobs/{jobId} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasAll(
+          ['status', 'queue_code', 'counter_name', 'date', 'dateKey', 'taken_at']
+        );
+      allow update, delete: if true;
+    }
+
     match /calls/{callId} {
       allow read: if true;
       allow create, update: if isStaff();

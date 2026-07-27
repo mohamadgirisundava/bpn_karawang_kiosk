@@ -7,10 +7,12 @@ import 'data/repositories/settings_repository_impl.dart';
 import 'domain/repositories/counter_repository.dart';
 import 'domain/repositories/queue_repository.dart';
 import 'domain/repositories/settings_repository.dart';
+import 'domain/usecases/create_print_job.dart';
 import 'domain/usecases/create_queue.dart';
 import 'domain/usecases/get_active_counters.dart';
 import 'domain/usecases/get_estimate_per_person.dart';
 import 'domain/usecases/get_queue_info.dart';
+import 'domain/usecases/watch_print_job_status.dart';
 import 'presentation/cubits/counter/counter_cubit.dart';
 import 'presentation/cubits/queue/queue_cubit.dart';
 import 'presentation/cubits/ticket/ticket_cubit.dart';
@@ -34,8 +36,10 @@ class Injection {
   // Usecases
   late final GetActiveCounters _getActiveCounters;
   late final CreateQueue _createQueue;
+  late final CreatePrintJob _createPrintJob;
   late final GetQueueInfo _getQueueInfo;
   late final GetEstimatePerPerson _getEstimatePerPerson;
+  late final WatchPrintJobStatus _watchPrintJobStatus;
 
   bool _initialized = false;
 
@@ -56,8 +60,10 @@ class Injection {
     // Usecases
     _getActiveCounters = GetActiveCounters(_counterRepository);
     _createQueue = CreateQueue(_queueRepository);
+    _createPrintJob = CreatePrintJob(_queueRepository);
     _getQueueInfo = GetQueueInfo(_queueRepository);
     _getEstimatePerPerson = GetEstimatePerPerson(_settingsRepository);
+    _watchPrintJobStatus = WatchPrintJobStatus(_queueRepository);
 
     _initialized = true;
   }
@@ -71,8 +77,10 @@ class Injection {
   /// Factory untuk TicketCubit.
   TicketCubit get ticketCubit => TicketCubit(
     createQueue: _createQueue,
+    createPrintJob: _createPrintJob,
     getQueueInfo: _getQueueInfo,
     getEstimatePerPerson: _getEstimatePerPerson,
+    watchPrintJobStatus: _watchPrintJobStatus,
   );
 
   /// Factory untuk QueueInfoCubit.

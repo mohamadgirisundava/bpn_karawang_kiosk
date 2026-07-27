@@ -17,6 +17,10 @@ class QueueRemoteDatasource {
   /// Buat tiket antrian baru dengan nomor urut yang dijamin unik lewat
   /// Firestore transaction — menghindari race condition saat dua request
   /// nge-generate nomor bersamaan.
+  ///
+  /// Sengaja TIDAK bikin `print_jobs` di sini — job cetak baru dibuat saat
+  /// user menekan tombol "Cetak Tiket Antrian" (lihat [createPrintJob]),
+  /// supaya printer nggak jalan otomatis begitu nomor antrian diambil.
   Future<DocumentSnapshot<Map<String, dynamic>>> createQueue({
     required String counterId,
     required String counterCode,
@@ -34,6 +38,7 @@ class QueueRemoteDatasource {
           : 0;
       final nextNumber = lastNumber + 1;
       final queueCode = '$counterCode${nextNumber.toString().padLeft(3, '0')}';
+      final takenAt = DateTime.now().toUtc().toIso8601String();
 
       transaction.set(counterRef, {'lastNumber': nextNumber});
       transaction.set(queueRef, {
@@ -43,11 +48,44 @@ class QueueRemoteDatasource {
         'status': 'waiting',
         'date': dateKey,
         'dateKey': dateKey,
-        'taken_at': DateTime.now().toUtc().toIso8601String(),
+        'taken_at': takenAt,
       });
     }).timeout(_timeout);
 
     return await queueRef.get();
+  }
+
+  /// Buat job pencetakan tiket fisik — dipanggil saat user menekan tombol
+  /// "Cetak Tiket Antrian", bukan saat nomor antrian diambil. Diproses oleh
+  /// helper terpisah di sisi Windows (BlueStacks nggak dukung USB
+  /// passthrough ke printer thermal), bukan oleh app kiosk ini langsung.
+  Future<String> createPrintJob({
+    required String queueCode,
+    required String counterName,
+    required String takenAt,
+  }) async {
+    final dateKey = _todayKey;
+    final printJobRef = await _db.collection('print_jobs').add({
+      'status': 'pending',
+      'queue_code': queueCode,
+      'counter_name': counterName,
+      'date': dateKey,
+      'dateKey': dateKey,
+      'taken_at': takenAt,
+    }).timeout(_timeout);
+
+    return printJobRef.id;
+  }
+
+  /// Pantau status job cetak (`pending` / `printed` / `error`) secara
+  /// realtime — dipakai UI kiosk buat nunggu hasil cetak beneran, bukan
+  /// animasi loading yang durasinya dikira-kira.
+  Stream<String> watchPrintJobStatus(String printJobId) {
+    return _db
+        .collection('print_jobs')
+        .doc(printJobId)
+        .snapshots()
+        .map((doc) => doc.data()?['status'] as String? ?? 'pending');
   }
 
   /// Get nomor yang sedang dipanggil/dilayani untuk counter tertentu.

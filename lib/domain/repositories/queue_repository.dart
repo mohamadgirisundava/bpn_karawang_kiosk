@@ -9,6 +9,17 @@ abstract class QueueRepository {
     required String counterCode,
   });
 
+  /// Buat job pencetakan tiket fisik (dipanggil saat user menekan tombol
+  /// "Cetak Tiket Antrian"), mengembalikan id job untuk dipantau.
+  Future<String> createPrintJob({
+    required String queueCode,
+    required String counterName,
+    required String takenAt,
+  });
+
+  /// Pantau status job cetak tiket fisik terkait satu tiket antrian.
+  Stream<String> watchPrintJobStatus(String printJobId);
+
   /// Get info antrian (serving + waiting) untuk satu counter.
   Future<QueueInfo> getQueueInfo(String counterId);
 

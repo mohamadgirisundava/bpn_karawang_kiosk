@@ -31,7 +31,6 @@ class _TicketScreenState extends State<TicketScreen>
 
   static const Duration _pageTimeout = Duration(seconds: 60);
   Timer? _timeoutTimer;
-  bool _printed = false;
 
   @override
   void initState() {
@@ -74,78 +73,9 @@ class _TicketScreenState extends State<TicketScreen>
     );
   }
 
-  void _cetakTiket(String nomorAntrian) {
+  void _mulaiCetak() {
     _timeoutTimer?.cancel();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.white,
-        elevation: 8,
-        shadowColor: AppColors.navy.withValues(alpha: 0.3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(2)),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: Responsive.w(84),
-              height: Responsive.w(84),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: Responsive.w(64),
-                    height: Responsive.w(64),
-                    child: CircularProgressIndicator(
-                      strokeWidth: Responsive.w(3),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.gold,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.print,
-                    size: Responsive.sp(26),
-                    color: AppColors.navy,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: Responsive.h(16)),
-            Text(
-              'Tiket Sedang Dicetak...',
-              style: TextStyle(
-                fontSize: Responsive.sp(18),
-                fontWeight: FontWeight.bold,
-                color: AppColors.navy,
-              ),
-            ),
-            SizedBox(height: Responsive.h(6)),
-            Text(
-              'Nomor Antrian $nomorAntrian',
-              style: TextStyle(
-                fontSize: Responsive.sp(14),
-                color: AppColors.textMuted,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-      if (mounted) {
-        setState(() => _printed = true);
-        _resetTimeout();
-      }
-    });
+    _ticketCubit.watchPrintJob(counterName: widget.counter.name);
   }
 
   void _selesai() {
@@ -174,6 +104,14 @@ class _TicketScreenState extends State<TicketScreen>
                 'Gagal: ${state.errorMessage}',
                 duration: const Duration(seconds: 5),
               );
+            }
+
+            if (state.printJobStatus == PrintJobStatus.printed) {
+              SoundService.playSuccess();
+              _resetTimeout();
+            } else if (state.printJobStatus == PrintJobStatus.failed) {
+              SoundService.playError();
+              _resetTimeout();
             }
           },
           child: Scaffold(
@@ -270,9 +208,16 @@ class _TicketScreenState extends State<TicketScreen>
                                     case TicketStatus.loading:
                                       return _buildLoadingView();
                                     case TicketStatus.success:
-                                      return _printed
-                                          ? _buildPrintedView(state)
-                                          : _buildTicketDetailView(state);
+                                      switch (state.printJobStatus) {
+                                        case PrintJobStatus.idle:
+                                          return _buildTicketDetailView(state);
+                                        case PrintJobStatus.printing:
+                                          return _buildPrintingView();
+                                        case PrintJobStatus.printed:
+                                          return _buildPrintedView(state);
+                                        case PrintJobStatus.failed:
+                                          return _buildPrintFailedView(state);
+                                      }
                                     case TicketStatus.error:
                                       return _buildErrorView(state);
                                   }
@@ -316,6 +261,79 @@ class _TicketScreenState extends State<TicketScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPrintingView() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: Responsive.w(56),
+          height: Responsive.w(56),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(
+                strokeWidth: Responsive.w(5),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
+              ),
+              Icon(
+                Icons.print,
+                size: Responsive.sp(20),
+                color: AppColors.navy,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: Responsive.h(18)),
+        Text(
+          'Tiket Sedang Dicetak...',
+          style: TextStyle(
+            fontSize: Responsive.sp(16),
+            color: AppColors.navy,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrintFailedView(TicketState state) {
+    final nomorTiket = state.ticket?.queueCode ?? '-';
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.print_disabled,
+            size: Responsive.sp(48),
+            color: Colors.red.shade300,
+          ),
+          SizedBox(height: Responsive.h(12)),
+          Text(
+            'Tiket Gagal Dicetak',
+            style: TextStyle(
+              fontSize: Responsive.sp(18),
+              fontWeight: FontWeight.bold,
+              color: AppColors.navy,
+            ),
+          ),
+          SizedBox(height: Responsive.h(6)),
+          Text(
+            'Nomor antrian Anda tetap $nomorTiket dan sudah tercatat. Silakan hubungi petugas jika membutuhkan tiket fisik.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: Responsive.sp(13), color: AppColors.textMuted),
+          ),
+          SizedBox(height: Responsive.h(16)),
+          ElevatedButton(
+            onPressed: _selesai,
+            style: AppButtonStyles.elevated(),
+            child: const Text('Selesai'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -714,7 +732,7 @@ class _TicketScreenState extends State<TicketScreen>
               width: Responsive.w(cardWidth),
               child: hasTicket
                   ? ElevatedButton.icon(
-                      onPressed: () => _cetakTiket(nomorTiket),
+                      onPressed: _mulaiCetak,
                       icon: const Icon(Icons.print),
                       label: const Text('Cetak Tiket Antrian'),
                       style: AppButtonStyles.elevated(),
