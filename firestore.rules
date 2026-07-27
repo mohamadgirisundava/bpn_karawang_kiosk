@@ -69,9 +69,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Admin (Loket) menulis penuh saat sync tahunan setelah ganti lokasi.
+    // Display TV juga boleh nulis tanpa login — dia read-only secara
+    // desain, TAPI kalau data hari ini kosong (belum/sudah lewat masa
+    // sync), dia live-fetch ke myquran.com lalu self-heal nulis balik ke
+    // sini biar reload berikutnya nggak perlu hit API lagi. Dibatasi cuma
+    // boleh nulis field jadwal yang dikenal (sama pola validasi kayak
+    // /print_jobs), bukan sembarang field.
     match /prayer_schedule/{dateKey} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin()
+        || request.resource.data.keys().hasOnly(
+          ['imsak', 'subuh', 'terbit', 'dhuha', 'dzuhur', 'ashar', 'maghrib', 'isya']
+        );
     }
 
     match /announcements/{announcementId} {
