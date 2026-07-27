@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'core/constants/app_colors.dart';
 import 'core/services/call_announcer_service.dart';
+import 'core/services/kiosk_foreground_task.dart';
 import 'firebase_options.dart';
 import 'injection.dart';
 import 'presentation/screens/idle_screen.dart';
@@ -38,6 +39,13 @@ void main() async {
   unawaited(CallAnnouncerService.instance.start());
 
   runApp(const MyApp());
+
+  // Minta izin notifikasi + nyalain foreground service setelah frame
+  // pertama render — jangan sebelum runApp(), beberapa plugin butuh
+  // Activity yang udah attached buat nampilin dialog izin.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(startKioskForegroundTask());
+  });
 }
 
 class MyApp extends StatelessWidget {

@@ -1,5 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Foreground service (flutter_foreground_task) — biar proses kiosk
+         nggak di-suspend Android pas app-nya di-background, jadi listener
+         Firestore + pengumuman suara (CallAnnouncerService) tetap jalan.
+         dataSync: paling pas buat kasus kita (dengerin data realtime),
+         bukan mediaPlayback/dll. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:label="bpn_karawang_kiosk"
         android:name="${applicationName}"
@@ -33,6 +43,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Warning (dari dokumentasi plugin): jangan ganti nama service ini. -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
