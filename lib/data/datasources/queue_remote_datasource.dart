@@ -6,7 +6,9 @@ class QueueRemoteDatasource {
 
   QueueRemoteDatasource() : _db = FirebaseFirestore.instance;
 
-  static const Duration _timeout = Duration(seconds: 5);
+  // 8 detik (bukan 5) — query pertama abis app cold-start butuh waktu
+  // ekstra buat Firestore ngebuka koneksi pertama kalinya.
+  static const Duration _timeout = Duration(seconds: 8);
 
   /// Key tanggal hari ini, format "YYYY-MM-DD".
   String get _todayKey {

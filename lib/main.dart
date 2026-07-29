@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'core/constants/app_colors.dart';
+import 'core/services/adhan_scheduler_service.dart';
 import 'core/services/call_announcer_service.dart';
 import 'core/services/kiosk_foreground_task.dart';
+import 'core/services/scheduled_audio_service.dart';
 import 'firebase_options.dart';
 import 'injection.dart';
 import 'presentation/screens/idle_screen.dart';
@@ -38,6 +40,15 @@ void main() async {
   // RealtimeService — jangan sampai nge-block first paint.
   unawaited(CallAnnouncerService.instance.start());
 
+  // Sama alasannya — speaker fisik ada di kiosk, jadi adzan jadwal
+  // sholat juga diputar dari sini (bukan app Display, yang browsernya
+  // butuh gesture user dulu baru bisa keluar suara).
+  unawaited(AdhanSchedulerService.instance.start());
+
+  // Agenda audio custom bikinan admin sendiri (jam berapa, bunyi apa,
+  // sekali/tiap hari) — lihat ScheduledAudioService.
+  unawaited(ScheduledAudioService.instance.start());
+
   runApp(const MyApp());
 
   // Minta izin notifikasi + nyalain foreground service setelah frame
@@ -68,6 +79,15 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.navy,
           foregroundColor: AppColors.white,
+          elevation: 0,
+        ),
+        // Material 3 default-nya dialog pakai colorScheme.surfaceContainerHigh
+        // (abu-lavender ke-tint dari seedColor navy), bukan colorScheme.surface
+        // yang udah di-set putih di atas — beda sendiri dari kartu-kartu lain
+        // yang eksplisit putih. Radius/border dialog sendiri diset per-lokasi
+        // (butuh Responsive yang belum ready pas ThemeData ini dibangun).
+        dialogTheme: const DialogThemeData(
+          backgroundColor: AppColors.white,
           elevation: 0,
         ),
         useMaterial3: true,

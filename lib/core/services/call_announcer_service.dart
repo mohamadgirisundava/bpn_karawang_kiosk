@@ -93,13 +93,24 @@ String _buildAnnouncementText(Map<String, dynamic> data) {
   return 'Nomor antrian $spokenCode$desk';
 }
 
-/// Bunyiin chime + suara "Nomor antrian..." tiap ada panggilan baru
-/// (collection `calls`, `is_active == true`). Speaker fisik kiosk-lah
-/// yang beneran kepake buat pengumuman ini (bukan TV Display) — makanya
-/// logic-nya taruh di sini, pakai audio/TTS native Flutter
-/// (`audioplayers` + `flutter_tts`) bukan Web Speech API kayak versi
-/// Display, jadi nggak kena masalah autoplay policy / daftar voice
-/// kosong / force-dark yang bikin ribet di browser.
+/// Satu item dalam antrian ucap — `announcementRef` cuma keisi kalau
+/// asalnya dari pengumuman admin (`voice_announcements`), dipakai buat
+/// nandain "udah dibacain" abis diucapkan biar nggak keulang.
+typedef _SpokenItem = ({
+  String text,
+  DocumentReference<Map<String, dynamic>>? announcementRef,
+});
+
+/// Bunyiin chime + suara tiap ada panggilan nomor antrian baru (collection
+/// `calls`, `is_active == true`) ATAU pengumuman suara baru dari admin
+/// (collection `voice_announcements`, `played == false`) — dua-duanya
+/// lewat antrian ucap yang sama biar nggak saling motong (TTS cuma bisa
+/// ngomong satu hal dalam satu waktu). Speaker fisik kiosk-lah yang
+/// beneran kepake buat pengumuman ini (bukan TV Display) — makanya
+/// logic-nya taruh di sini, pakai audio/TTS native Flutter (`audioplayers`
+/// + `flutter_tts`) bukan Web Speech API kayak versi Display, jadi nggak
+/// kena masalah autoplay policy / daftar voice kosong / force-dark yang
+/// bikin ribet di browser.
 class CallAnnouncerService {
   CallAnnouncerService._();
   static final CallAnnouncerService instance = CallAnnouncerService._();
@@ -107,14 +118,14 @@ class CallAnnouncerService {
   final AudioPlayer _chimePlayer = AudioPlayer();
   final FlutterTts _tts = FlutterTts();
 
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _callSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _voiceAnnouncementSub;
   String? _lastAnnouncedCallId;
   bool _ttsReady = false;
 
-  // Antrian pengumuman — kalau ada beberapa loket manggil hampir
-  // bersamaan, diproses satu-satu berurutan biar nggak saling motong
-  // (TTS cuma bisa ngomong satu hal dalam satu waktu).
-  final List<Map<String, dynamic>> _queue = [];
+  // Antrian ucap — kalau ada beberapa loket manggil atau pengumuman baru
+  // hampir bersamaan, diproses satu-satu berurutan.
+  final List<_SpokenItem> _queue = [];
   bool _processing = false;
 
   Future<void> _ensureTtsReady() async {
@@ -130,15 +141,15 @@ class CallAnnouncerService {
     }
   }
 
-  /// Mulai dengerin panggilan baru. Aman dipanggil berkali-kali (no-op
-  /// kalau udah jalan).
+  /// Mulai dengerin panggilan & pengumuman baru. Aman dipanggil
+  /// berkali-kali (no-op kalau udah jalan).
   Future<void> start() async {
-    if (_sub != null) return;
+    if (_callSub != null) return;
 
     await _chimePlayer.setReleaseMode(ReleaseMode.stop);
     await _ensureTtsReady();
 
-    _sub = FirebaseFirestore.instance
+    _callSub = FirebaseFirestore.instance
         .collection('calls')
         .where('is_active', isEqualTo: true)
         .orderBy('called_at', descending: true)
@@ -150,16 +161,37 @@ class CallAnnouncerService {
             final doc = snapshot.docs.first;
             if (doc.id == _lastAnnouncedCallId) return;
             _lastAnnouncedCallId = doc.id;
-            _queue.add(doc.data());
+            _queue.add((text: _buildAnnouncementText(doc.data()), announcementRef: null));
             unawaited(_processQueue());
           },
-          onError: (Object e) => debugPrint('CallAnnouncerService: listen error: $e'),
+          onError: (Object e) => debugPrint('CallAnnouncerService: listen error (calls): $e'),
+        );
+
+    _voiceAnnouncementSub = FirebaseFirestore.instance
+        .collection('voice_announcements')
+        .where('played', isEqualTo: false)
+        .orderBy('createdAt')
+        .snapshots()
+        .listen(
+          (snapshot) {
+            for (final change in snapshot.docChanges) {
+              if (change.type != DocumentChangeType.added) continue;
+              final text = change.doc.data()?['text'] as String? ?? '';
+              if (text.trim().isEmpty) continue;
+              _queue.add((text: text, announcementRef: change.doc.reference));
+            }
+            unawaited(_processQueue());
+          },
+          onError: (Object e) =>
+              debugPrint('CallAnnouncerService: listen error (voice_announcements): $e'),
         );
   }
 
   Future<void> stop() async {
-    await _sub?.cancel();
-    _sub = null;
+    await _callSub?.cancel();
+    _callSub = null;
+    await _voiceAnnouncementSub?.cancel();
+    _voiceAnnouncementSub = null;
     _queue.clear();
   }
 
@@ -168,10 +200,21 @@ class CallAnnouncerService {
     _processing = true;
     try {
       while (_queue.isNotEmpty) {
-        final data = _queue.removeAt(0);
+        final item = _queue.removeAt(0);
         await _playChime();
         await Future<void>.delayed(const Duration(milliseconds: 400));
-        await _speak(_buildAnnouncementText(data));
+        await _speak(item.text);
+        if (item.announcementRef != null) {
+          // Nandain udah dibacain SETELAH selesai ngomong, bukan sebelum —
+          // kalau app ke-kill di tengah ngomong, pengumuman ini masih
+          // berstatus "belum dibacain" dan bakal diulang pas app nyala
+          // lagi, daripada hilang kebaca gara-gara nggak sempet mark.
+          unawaited(
+            item.announcementRef!.update({'played': true}).catchError((Object e) {
+              debugPrint('CallAnnouncerService: gagal update status played: $e');
+            }),
+          );
+        }
         await Future<void>.delayed(const Duration(milliseconds: 300));
       }
     } finally {

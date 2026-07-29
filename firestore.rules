@@ -26,14 +26,18 @@ service cloud.firestore {
     }
 
     // Public read + public create (kiosk takes a ticket without login).
-    // Update/delete require an active staff account.
+    // Update requires an active staff account. Delete juga dibuka publik
+    // khusus buat fitur "Reset Antrian" di menu satpam Kiosk (nggak ada
+    // login di situ) — create/update tetap terkunci staff/shape-validated
+    // seperti biasa, cuma delete yang dilonggarkan.
     match /queues/{queueId} {
       allow read: if true;
       allow create: if request.resource.data.status == 'waiting'
         && request.resource.data.keys().hasAll(
           ['counter', 'queue_number', 'queue_code', 'status', 'date', 'dateKey', 'taken_at']
         );
-      allow update, delete: if isStaff();
+      allow update: if isStaff();
+      allow delete: if true;
     }
 
     // Internal atomic counters backing queue number generation.
@@ -58,10 +62,13 @@ service cloud.firestore {
       allow update, delete: if true;
     }
 
+    // Delete dibuka publik juga buat "Reset Antrian" di menu satpam Kiosk
+    // (sama alasannya kayak /queues di atas) — create/update tetap
+    // terkunci staff.
     match /calls/{callId} {
       allow read: if true;
       allow create, update: if isStaff();
-      allow delete: if isAdmin();
+      allow delete: if true;
     }
 
     match /settings/{key} {
@@ -87,6 +94,34 @@ service cloud.firestore {
     match /announcements/{announcementId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Agenda audio custom admin ("bunyi jam segini, sekali/tiap hari").
+    // Dikelola penuh oleh admin lewat Loket. Kiosk (tanpa login) boleh
+    // update balik cuma dua field ini — nandain kapan terakhir bunyi
+    // (buat dedupe "daily") dan matiin otomatis jadwal "once" setelah
+    // sekali diputar, biar nggak keulang taun depan di tanggal yang sama.
+    match /audio_schedules/{scheduleId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastPlayedAt', 'isActive']);
+    }
+
+    // Pengumuman suara sekali-baca — admin ketik teks di Loket, Kiosk
+    // langsung bacain lewat TTS sekali begitu muncul (bukan running text
+    // ticker kayak /announcements di atas). Kiosk (tanpa login) cuma
+    // boleh update field `played` doang, buat nandain udah dibacain biar
+    // nggak keulang.
+    match /voice_announcements/{announcementId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && request.resource.data.played == false
+        && request.resource.data.keys().hasAll(['text', 'createdAt', 'played']);
+      allow update: if isAdmin()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['played']);
+      allow delete: if isAdmin();
     }
 
     // Firebase Auth UID keyed profile: self can read own doc, admin can

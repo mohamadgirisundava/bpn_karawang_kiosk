@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_radius.dart';
 import '../../core/services/sound_service.dart';
 import '../../core/utils/audio_feedback.dart';
 import '../../core/utils/error_snackbar.dart';
@@ -115,7 +116,7 @@ class _TicketScreenState extends State<TicketScreen>
             }
           },
           child: Scaffold(
-            backgroundColor: AppColors.background.withOpacity(0.4),
+            backgroundColor: AppColors.background.withValues(alpha: 0.4),
             body: Column(
               children: [
                 Container(
@@ -402,15 +403,8 @@ class _TicketScreenState extends State<TicketScreen>
               ),
               decoration: BoxDecoration(
                 color: AppColors.white,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(Responsive.r(2)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.16),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.border, width: 2),
               ),
               child: Row(
                 children: [
@@ -420,7 +414,7 @@ class _TicketScreenState extends State<TicketScreen>
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: AppColors.navy,
-                      borderRadius: BorderRadius.circular(Responsive.r(2)),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                     ),
                     child: Text(
                       widget.counter.code,
@@ -471,15 +465,8 @@ class _TicketScreenState extends State<TicketScreen>
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: AppColors.white,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(Responsive.r(2)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.16),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.border, width: 2),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -545,14 +532,23 @@ class _TicketScreenState extends State<TicketScreen>
                       ),
 
                       Container(
-                        width: Responsive.w(halfWidth),
+                        width: Responsive.w(halfWidth - 10),
+                        margin: EdgeInsets.fromLTRB(
+                          0,
+                          Responsive.h(10),
+                          Responsive.w(10),
+                          Responsive.h(10),
+                        ),
                         padding: EdgeInsets.symmetric(
                           horizontal: Responsive.w(12),
                           vertical: Responsive.h(16),
                         ),
-                        color: hasTicket
-                            ? AppColors.gold.withValues(alpha: 0.28)
-                            : AppColors.lightBlue.withValues(alpha: 0.18),
+                        decoration: BoxDecoration(
+                          color: hasTicket
+                              ? AppColors.gold.withValues(alpha: 0.28)
+                              : AppColors.lightBlue.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -590,16 +586,26 @@ class _TicketScreenState extends State<TicketScreen>
                       ),
                     ],
                   ),
-                  Container(height: 1, color: AppColors.border),
-                  Row(
+                  Container(height: 2, color: AppColors.border),
+                  IntrinsicHeight(
+                    child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         width: Responsive.w(halfWidth),
-                        color: AppColors.white,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.w(12),
-                          vertical: Responsive.h(10),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: AppColors.border,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        padding: EdgeInsets.fromLTRB(
+                          Responsive.w(12),
+                          Responsive.h(10),
+                          Responsive.w(12),
+                          Responsive.h(14),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -639,17 +645,26 @@ class _TicketScreenState extends State<TicketScreen>
                           ],
                         ),
                       ),
-                      Container(
-                        width: 1,
-                        height: Responsive.h(44),
+                      const VerticalDivider(
+                        width: 2,
+                        thickness: 2,
                         color: AppColors.border,
                       ),
                       Container(
                         width: Responsive.w(halfWidth),
-                        color: AppColors.white,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.w(12),
-                          vertical: Responsive.h(10),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: AppColors.border,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        padding: EdgeInsets.fromLTRB(
+                          Responsive.w(12),
+                          Responsive.h(10),
+                          Responsive.w(12),
+                          Responsive.h(14),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -657,7 +672,7 @@ class _TicketScreenState extends State<TicketScreen>
                             Icon(
                               Icons.access_time,
                               size: Responsive.sp(14),
-                              color: AppColors.orange,
+                              color: AppColors.navy,
                             ),
                             SizedBox(width: Responsive.w(6)),
                             Column(
@@ -689,6 +704,7 @@ class _TicketScreenState extends State<TicketScreen>
                       ),
                     ],
                   ),
+                  ),
                 ],
               ),
             ),
@@ -701,9 +717,9 @@ class _TicketScreenState extends State<TicketScreen>
                   vertical: Responsive.h(8),
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(Responsive.r(4)),
-                  border: Border.all(color: AppColors.orange),
+                  color: AppColors.navy.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                  border: Border.all(color: AppColors.navy, width: 2),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -711,7 +727,7 @@ class _TicketScreenState extends State<TicketScreen>
                   children: [
                     Icon(
                       Icons.warning_amber,
-                      color: AppColors.orange,
+                      color: AppColors.navy,
                       size: Responsive.sp(18),
                     ),
                     SizedBox(width: Responsive.w(8)),
@@ -719,7 +735,7 @@ class _TicketScreenState extends State<TicketScreen>
                       'Layanan Prioritas',
                       style: TextStyle(
                         fontSize: Responsive.sp(12.5),
-                        color: AppColors.orange,
+                        color: AppColors.navy,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -812,15 +828,8 @@ class _TicketScreenState extends State<TicketScreen>
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppColors.white,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(Responsive.r(2)),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.navy.withValues(alpha: 0.16),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(color: AppColors.border, width: 2),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -890,7 +899,7 @@ class _TicketScreenState extends State<TicketScreen>
                     ],
                   ),
                 ),
-                Container(height: 1, color: AppColors.border),
+                Container(height: 2, color: AppColors.border),
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: Responsive.w(16),
@@ -906,12 +915,12 @@ class _TicketScreenState extends State<TicketScreen>
                       _buildTicketInfoRow(
                         'Antrian sebelum Anda',
                         '$sisaAntrian orang',
-                        valueColor: AppColors.orange,
+                        valueColor: AppColors.navy,
                       ),
                     ],
                   ),
                 ),
-                Container(height: 1, color: AppColors.border),
+                Container(height: 2, color: AppColors.border),
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: Responsive.w(16),

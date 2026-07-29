@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_radius.dart';
 import '../../core/utils/responsive.dart';
 import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
@@ -232,17 +233,11 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
     final estimasiMenit = sisaAntrian * state.estimatePerPerson;
 
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(Responsive.r(4)),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.08),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 2),
       ),
       child: Stack(
         children: [
@@ -267,7 +262,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: Responsive.h(8)),
-                  Container(height: 1, color: AppColors.border),
+                  Container(height: 2, color: AppColors.border),
                   Expanded(
                     child: Center(
                       child: Text(
@@ -336,10 +331,10 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                   vertical: Responsive.h(3),
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.orange,
+                  color: AppColors.navy,
                   borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(Responsive.r(4)),
-                    bottomLeft: Radius.circular(Responsive.r(4)),
+                    topRight: Radius.circular(AppRadius.card),
+                    bottomLeft: Radius.circular(AppRadius.chip),
                   ),
                 ),
                 child: Text(

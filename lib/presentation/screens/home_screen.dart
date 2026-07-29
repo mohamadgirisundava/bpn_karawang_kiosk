@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_radius.dart';
 import '../../core/services/realtime_service.dart';
 import '../../core/utils/audio_feedback.dart';
-import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
@@ -14,7 +13,7 @@ import '../cubits/counter/counter_cubit.dart';
 import '../cubits/counter/counter_state.dart';
 import '../widgets/app_footer.dart';
 import '../widgets/clock_widget.dart';
-import 'idle_screen.dart';
+import '../widgets/kiosk_settings_menu.dart';
 import 'queue_info_screen.dart';
 import 'ticket_screen.dart';
 
@@ -53,16 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _goToIdle() {
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const IdleScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-    );
+    goToIdleOrBreak(context);
   }
 
   void _pilihCounter(CounterEntity counter) {
@@ -79,222 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ).push(MaterialPageRoute(builder: (context) => const QueueInfoScreen()));
   }
 
-  /// Menu admin tersembunyi — akses via long-press logo.
-  void _showAdminMenu() {
-    AudioFeedback.tap();
-    final pinController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(4)),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.admin_panel_settings,
-              color: AppColors.navy,
-              size: Responsive.sp(28),
-            ),
-            SizedBox(width: Responsive.w(8)),
-            Text(
-              'Menu Admin',
-              style: TextStyle(
-                fontSize: Responsive.sp(18),
-                fontWeight: FontWeight.bold,
-                color: AppColors.navy,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Masukkan PIN untuk mengakses pengaturan',
-              style: TextStyle(
-                fontSize: Responsive.sp(14),
-                color: AppColors.textMuted,
-              ),
-            ),
-            SizedBox(height: Responsive.h(16)),
-            TextField(
-              controller: pinController,
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              maxLength: 6,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: Responsive.sp(24),
-                letterSpacing: Responsive.w(8),
-              ),
-              decoration: InputDecoration(
-                hintText: '••••••',
-                counterText: '',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(Responsive.r(4)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(Responsive.r(4)),
-                  borderSide: const BorderSide(color: AppColors.navy, width: 2),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            style: AppButtonStyles.text(),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (pinController.text == '123456') {
-                Navigator.of(dialogContext).pop();
-                _showSettingsDialog();
-              } else {
-                Navigator.of(dialogContext).pop();
-                showErrorSnackbar(context, 'PIN salah');
-              }
-            },
-            style: AppButtonStyles.elevated(),
-            child: const Text('Masuk'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSettingsDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(4)),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.settings,
-              color: AppColors.navy,
-              size: Responsive.sp(28),
-            ),
-            SizedBox(width: Responsive.w(8)),
-            Text(
-              'Pengaturan',
-              style: TextStyle(
-                fontSize: Responsive.sp(18),
-                fontWeight: FontWeight.bold,
-                color: AppColors.navy,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(
-                Icons.exit_to_app,
-                color: AppColors.danger,
-                size: Responsive.sp(24),
-              ),
-              title: Text(
-                'Keluar Aplikasi',
-                style: TextStyle(fontSize: Responsive.sp(16)),
-              ),
-              subtitle: Text(
-                'Tutup aplikasi kiosk',
-                style: TextStyle(
-                  fontSize: Responsive.sp(13),
-                  color: AppColors.textMuted,
-                ),
-              ),
-              onTap: () {
-                Navigator.of(dialogContext).pop();
-                _confirmExit();
-              },
-            ),
-            SizedBox(height: Responsive.h(8)),
-            Container(height: 1, color: AppColors.border),
-            SizedBox(height: Responsive.h(8)),
-            ListTile(
-              leading: Icon(
-                Icons.refresh,
-                color: AppColors.navy,
-                size: Responsive.sp(24),
-              ),
-              title: Text(
-                'Restart ke Idle',
-                style: TextStyle(fontSize: Responsive.sp(16)),
-              ),
-              subtitle: Text(
-                'Kembali ke layar awal',
-                style: TextStyle(
-                  fontSize: Responsive.sp(13),
-                  color: AppColors.textMuted,
-                ),
-              ),
-              onTap: () {
-                Navigator.of(dialogContext).pop();
-                _goToIdle();
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            style: AppButtonStyles.text(),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmExit() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(4)),
-        ),
-        title: Text(
-          'Keluar Aplikasi?',
-          style: TextStyle(
-            fontSize: Responsive.sp(18),
-            fontWeight: FontWeight.bold,
-            color: AppColors.navy,
-          ),
-        ),
-        content: Text(
-          'Aplikasi kiosk akan ditutup. Pastikan ini memang diperlukan.',
-          style: TextStyle(
-            fontSize: Responsive.sp(14),
-            color: AppColors.textMuted,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            style: AppButtonStyles.text(),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              SystemNavigator.pop();
-            },
-            style: AppButtonStyles.elevated(background: AppColors.danger),
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     Responsive.init(context);
@@ -305,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: BlocProvider.value(
         value: _counterCubit,
         child: Scaffold(
-          backgroundColor: AppColors.background.withOpacity(0.4),
+          backgroundColor: AppColors.background.withValues(alpha: 0.4),
           body: Column(
             children: [
               _buildHeader(),
@@ -361,8 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       decoration: BoxDecoration(
         color: AppColors.navy.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(Responsive.r(4)),
-        border: Border.all(color: AppColors.navy.withValues(alpha: 0.15)),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        border: Border.all(color: AppColors.navy.withValues(alpha: 0.15), width: 2),
       ),
       child: Row(
         children: [
@@ -402,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           GestureDetector(
-            onLongPress: _showAdminMenu,
+            onLongPress: () => showKioskSettingsMenu(context),
             child: Image.asset(
               'assets/images/bpn_karawang_logo.png',
               width: Responsive.w(38),
@@ -444,11 +218,11 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(width: Responsive.w(10)),
           Container(
             height: Responsive.h(32),
-            width: 1,
+            width: 2,
             color: AppColors.white.withValues(alpha: 0.25),
           ),
           IconButton(
-            onPressed: _confirmExit,
+            onPressed: () => confirmExitKiosk(context),
             tooltip: 'Keluar Aplikasi',
             icon: Icon(
               Icons.logout,
@@ -586,21 +360,14 @@ class _HomeScreenState extends State<HomeScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _pilihCounter(counter),
-        borderRadius: BorderRadius.circular(Responsive.r(16)),
+        borderRadius: BorderRadius.circular(AppRadius.cardLarge),
         enableFeedback: false,
         child: Container(
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(Responsive.r(0)),
+            borderRadius: BorderRadius.circular(AppRadius.cardLarge),
             border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.navy.withValues(alpha: 0.08),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Stack(
             children: [
@@ -633,9 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: AppColors.navy,
-                              borderRadius: BorderRadius.circular(
-                                Responsive.r(14),
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                             ),
                             child: Text(
                               counter.code,
@@ -700,10 +465,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.orange,
-                                borderRadius: BorderRadius.circular(
-                                  Responsive.r(4),
-                                ),
+                                color: AppColors.navy,
+                                borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
                                 'PRIORITAS',
@@ -729,7 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: Responsive.h(14)),
-                      Container(height: 1, color: AppColors.border),
+                      Container(height: 2, color: AppColors.border),
                       SizedBox(height: Responsive.h(12)),
                       Row(
                         children: [

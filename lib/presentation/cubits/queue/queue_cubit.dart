@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../core/utils/error_message.dart';
@@ -52,13 +53,26 @@ class QueueInfoCubit extends Cubit<QueueInfoState> {
     }
   }
 
+  // Sama alasannya kayak CounterCubit: query pertama abis cold-start
+  // kadang gagal/timeout, retry sendiri beberapa kali biar nggak nyangkut
+  // nampilin data lama/kosong tanpa ada indikasi apa-apa ke user.
   Future<void> _refreshQueueInfo() async {
     if (state.counters.isEmpty) return;
-    try {
-      final ids = state.counters.map((c) => c.id).toList();
-      final info = await _getQueueInfo.getAll(ids);
-      emit(state.copyWith(queueInfo: info));
-    } catch (_) {}
+    final ids = state.counters.map((c) => c.id).toList();
+
+    const maxAttempts = 3;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final info = await _getQueueInfo.getAll(ids);
+        if (isClosed) return;
+        emit(state.copyWith(queueInfo: info));
+        return;
+      } catch (e) {
+        debugPrint('QueueInfoCubit: gagal ambil info antrian (percobaan $attempt): $e');
+        if (attempt == maxAttempts) return;
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
+    }
   }
 
   void _setupRealtime() {

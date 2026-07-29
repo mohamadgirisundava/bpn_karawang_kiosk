@@ -60,6 +60,14 @@
         { "fieldPath": "is_active", "order": "ASCENDING" },
         { "fieldPath": "sort_order", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "voice_announcements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "played", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
