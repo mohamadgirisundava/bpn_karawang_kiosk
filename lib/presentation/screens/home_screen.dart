@@ -367,193 +367,180 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(AppRadius.cardLarge),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.border, width: 2),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                child: Container(
-                  height: Responsive.h(6),
-                  color: AppColors.navy,
-                ),
+          child: Positioned.fill(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                Responsive.w(16),
+                Responsive.h(18),
+                Responsive.w(16),
+                Responsive.h(14),
               ),
-              Positioned.fill(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    Responsive.w(16),
-                    Responsive.h(18),
-                    Responsive.w(16),
-                    Responsive.h(14),
-                  ),
-                  child: Column(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: Responsive.w(52),
-                            height: Responsive.w(52),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: AppColors.navy,
-                              borderRadius: BorderRadius.circular(AppRadius.chip),
-                            ),
-                            child: Text(
-                              counter.code,
-                              style: TextStyle(
-                                fontSize: Responsive.sp(20),
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.white,
-                              ),
-                            ),
+                      Container(
+                        width: Responsive.w(52),
+                        height: Responsive.w(52),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.navy,
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
+                        ),
+                        child: Text(
+                          counter.code,
+                          style: TextStyle(
+                            fontSize: Responsive.sp(20),
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
                           ),
-                          const Spacer(),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: Responsive.w(12),
-                              vertical: Responsive.h(6),
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.navy.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Pilih Loket',
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(10.5),
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.navy,
-                                  ),
-                                ),
-                                SizedBox(width: Responsive.w(2)),
-                                Icon(
-                                  Icons.chevron_right,
-                                  size: Responsive.sp(13),
-                                  color: AppColors.navy,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                      SizedBox(height: Responsive.h(14)),
-                      Row(
-                        children: [
-                          Text(
-                            counter.name.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: Responsive.sp(10),
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.6,
-                              color: AppColors.textMuted,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (counter.isPriority) ...[
-                            SizedBox(width: Responsive.w(6)),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: Responsive.w(6),
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
+                      const Spacer(),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.w(12),
+                          vertical: Responsive.h(6),
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.navy.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Pilih Loket',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(10.5),
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.navy,
-                                borderRadius: BorderRadius.circular(999),
                               ),
-                              child: Text(
-                                'PRIORITAS',
-                                style: TextStyle(
-                                  fontSize: Responsive.sp(7.5),
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
-                                ),
-                              ),
+                            ),
+                            SizedBox(width: Responsive.w(2)),
+                            Icon(
+                              Icons.chevron_right,
+                              size: Responsive.sp(13),
+                              color: AppColors.navy,
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                      SizedBox(height: Responsive.h(2)),
+                    ],
+                  ),
+                  SizedBox(height: Responsive.h(14)),
+                  Row(
+                    children: [
                       Text(
-                        counter.description,
+                        counter.name.toUpperCase(),
                         style: TextStyle(
-                          fontSize: Responsive.sp(14),
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.navy,
+                          fontSize: Responsive.sp(10),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.6,
+                          color: AppColors.textMuted,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: Responsive.h(14)),
-                      Container(height: 2, color: AppColors.border),
-                      SizedBox(height: Responsive.h(12)),
-                      Row(
-                        children: [
-                          Container(
-                            width: Responsive.w(7),
-                            height: Responsive.w(7),
-                            decoration: const BoxDecoration(
-                              color: AppColors.green,
-                              shape: BoxShape.circle,
-                            ),
+                      if (counter.isPriority) ...[
+                        SizedBox(width: Responsive.w(6)),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Responsive.w(6),
+                            vertical: 1,
                           ),
-                          SizedBox(width: Responsive.w(6)),
-                          Expanded(
-                            child: Text(
-                              'Sedang dilayani',
-                              style: TextStyle(
-                                fontSize: Responsive.sp(11),
-                                color: AppColors.textMuted,
-                              ),
-                            ),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy,
+                            borderRadius: BorderRadius.circular(999),
                           ),
-                          Text(
-                            nomorBerjalan,
+                          child: Text(
+                            'PRIORITAS',
                             style: TextStyle(
-                              fontSize: Responsive.sp(15),
+                              fontSize: Responsive.sp(7.5),
                               fontWeight: FontWeight.bold,
-                              color: AppColors.navy,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
+                              color: AppColors.white,
                             ),
                           ),
-                        ],
+                        ),
+                      ],
+                    ],
+                  ),
+                  SizedBox(height: Responsive.h(2)),
+                  Text(
+                    counter.description,
+                    style: TextStyle(
+                      fontSize: Responsive.sp(14),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.navy,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: Responsive.h(14)),
+                  Container(height: 2, color: AppColors.border),
+                  SizedBox(height: Responsive.h(12)),
+                  Row(
+                    children: [
+                      Container(
+                        width: Responsive.w(7),
+                        height: Responsive.w(7),
+                        decoration: const BoxDecoration(
+                          color: AppColors.green,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                      SizedBox(height: Responsive.h(8)),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.people_outline,
-                            size: Responsive.sp(13),
+                      SizedBox(width: Responsive.w(6)),
+                      Expanded(
+                        child: Text(
+                          'Sedang dilayani',
+                          style: TextStyle(
+                            fontSize: Responsive.sp(11),
                             color: AppColors.textMuted,
                           ),
-                          SizedBox(width: Responsive.w(6)),
-                          Expanded(
-                            child: Text(
-                              '$sisaAntrian orang dalam antrian',
-                              style: TextStyle(
-                                fontSize: Responsive.sp(11),
-                                color: AppColors.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ),
+                      Text(
+                        nomorBerjalan,
+                        style: TextStyle(
+                          fontSize: Responsive.sp(15),
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.navy,
+                          fontFeatures: const [
+                            FontFeature.tabularFigures(),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
+                  SizedBox(height: Responsive.h(8)),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.people_outline,
+                        size: Responsive.sp(13),
+                        color: AppColors.textMuted,
+                      ),
+                      SizedBox(width: Responsive.w(6)),
+                      Expanded(
+                        child: Text(
+                          '$sisaAntrian orang dalam antrian',
+                          style: TextStyle(
+                            fontSize: Responsive.sp(11),
+                            color: AppColors.textMuted,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

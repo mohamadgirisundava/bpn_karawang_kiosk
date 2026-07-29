@@ -279,11 +279,7 @@ class _TicketScreenState extends State<TicketScreen>
                 strokeWidth: Responsive.w(5),
                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
               ),
-              Icon(
-                Icons.print,
-                size: Responsive.sp(20),
-                color: AppColors.navy,
-              ),
+              Icon(Icons.print, size: Responsive.sp(20), color: AppColors.navy),
             ],
           ),
         ),
@@ -325,7 +321,10 @@ class _TicketScreenState extends State<TicketScreen>
           Text(
             'Nomor antrian Anda tetap $nomorTiket dan sudah tercatat. Silakan hubungi petugas jika membutuhkan tiket fisik.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: Responsive.sp(13), color: AppColors.textMuted),
+            style: TextStyle(
+              fontSize: Responsive.sp(13),
+              color: AppColors.textMuted,
+            ),
           ),
           SizedBox(height: Responsive.h(16)),
           ElevatedButton(
@@ -386,7 +385,6 @@ class _TicketScreenState extends State<TicketScreen>
     final hasTicket = state.ticket != null;
     final nomorTiket = state.ticket?.queueCode ?? '-';
     const cardWidth = 420.0;
-    const halfWidth = 209.0;
 
     return ScaleTransition(
       scale: _scaleAnim,
@@ -472,116 +470,116 @@ class _TicketScreenState extends State<TicketScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: Responsive.w(halfWidth),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.w(12),
-                          vertical: Responsive.h(16),
-                        ),
-                        color: AppColors.white,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'SEDANG DILAYANI',
-                              style: TextStyle(
-                                fontSize: Responsive.sp(9.5),
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.4,
-                                color: AppColors.textMuted,
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Responsive.w(12),
+                            vertical: Responsive.h(16),
+                          ),
+                          color: AppColors.white,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'SEDANG DILAYANI',
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(9.5),
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.4,
+                                  color: AppColors.textMuted,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: Responsive.h(6)),
-                            Text(
-                              nomorBerjalan,
-                              style: TextStyle(
-                                fontSize: Responsive.sp(26),
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.navy,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
+                              SizedBox(height: Responsive.h(6)),
+                              Text(
+                                nomorBerjalan,
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(26),
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.navy,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: Responsive.h(6)),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: Responsive.w(6),
+                                    height: Responsive.w(6),
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.green,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  SizedBox(width: Responsive.w(5)),
+                                  Text(
+                                    'Aktif',
+                                    style: TextStyle(
+                                      fontSize: Responsive.sp(10),
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
                                 ],
                               ),
-                            ),
-                            SizedBox(height: Responsive.h(6)),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: Responsive.w(6),
-                                  height: Responsive.w(6),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.green,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                SizedBox(width: Responsive.w(5)),
-                                Text(
-                                  'Aktif',
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(10),
-                                    color: AppColors.textMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-
-                      Container(
-                        width: Responsive.w(halfWidth - 10),
-                        margin: EdgeInsets.fromLTRB(
-                          0,
-                          Responsive.h(10),
-                          Responsive.w(10),
-                          Responsive.h(10),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.w(12),
-                          vertical: Responsive.h(16),
-                        ),
-                        decoration: BoxDecoration(
-                          color: hasTicket
-                              ? AppColors.gold.withValues(alpha: 0.28)
-                              : AppColors.lightBlue.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(AppRadius.chip),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              hasTicket ? 'NOMOR TIKET ANDA' : 'SISA ANTRIAN',
-                              style: TextStyle(
-                                fontSize: Responsive.sp(9.5),
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.4,
-                                color: AppColors.navy,
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.fromLTRB(
+                            0,
+                            Responsive.h(10),
+                            Responsive.w(10),
+                            Responsive.h(10),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Responsive.w(12),
+                            vertical: Responsive.h(16),
+                          ),
+                          decoration: BoxDecoration(
+                            color: hasTicket
+                                ? AppColors.gold.withValues(alpha: 0.28)
+                                : AppColors.lightBlue.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                hasTicket ? 'NOMOR TIKET ANDA' : 'SISA ANTRIAN',
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(9.5),
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.4,
+                                  color: AppColors.navy,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: Responsive.h(6)),
-                            Text(
-                              hasTicket ? nomorTiket : '$sisaAntrian',
-                              style: TextStyle(
-                                fontSize: Responsive.sp(26),
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.navy,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
+                              SizedBox(height: Responsive.h(6)),
+                              Text(
+                                hasTicket ? nomorTiket : '$sisaAntrian',
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(26),
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.navy,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
                               ),
-                            ),
-                            SizedBox(height: Responsive.h(6)),
-                            Text(
-                              hasTicket ? 'Harap simpan nomor ini' : 'orang',
-                              style: TextStyle(
-                                fontSize: Responsive.sp(9.5),
-                                color: AppColors.navy.withValues(alpha: 0.7),
+                              SizedBox(height: Responsive.h(6)),
+                              Text(
+                                hasTicket ? 'Harap simpan nomor ini' : 'orang',
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(9.5),
+                                  color: AppColors.navy.withValues(alpha: 0.7),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -589,121 +587,106 @@ class _TicketScreenState extends State<TicketScreen>
                   Container(height: 2, color: AppColors.border),
                   IntrinsicHeight(
                     child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: Responsive.w(halfWidth),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            top: BorderSide(
-                              color: AppColors.border,
-                              width: 2,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.fromLTRB(
+                              Responsive.w(12),
+                              Responsive.h(10),
+                              Responsive.w(12),
+                              Responsive.h(14),
                             ),
-                          ),
-                        ),
-                        padding: EdgeInsets.fromLTRB(
-                          Responsive.w(12),
-                          Responsive.h(10),
-                          Responsive.w(12),
-                          Responsive.h(14),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.people_outline,
-                              size: Responsive.sp(14),
-                              color: AppColors.lightBlue,
-                            ),
-                            SizedBox(width: Responsive.w(6)),
-                            Column(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  hasTicket
-                                      ? 'Antrian sebelum Anda'
-                                      : 'Antrian saat ini',
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(9.5),
-                                    color: AppColors.textMuted,
-                                  ),
+                                Icon(
+                                  Icons.people_outline,
+                                  size: Responsive.sp(14),
+                                  color: AppColors.lightBlue,
                                 ),
-                                Text(
-                                  '$sisaAntrian orang',
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(11.5),
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textDark,
-                                    fontFeatures: const [
-                                      FontFeature.tabularFigures(),
-                                    ],
-                                  ),
+                                SizedBox(width: Responsive.w(6)),
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      hasTicket
+                                          ? 'Antrian sebelum Anda'
+                                          : 'Antrian saat ini',
+                                      style: TextStyle(
+                                        fontSize: Responsive.sp(9.5),
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                    Text(
+                                      '$sisaAntrian orang',
+                                      style: TextStyle(
+                                        fontSize: Responsive.sp(11.5),
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textDark,
+                                        fontFeatures: const [
+                                          FontFeature.tabularFigures(),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                      const VerticalDivider(
-                        width: 2,
-                        thickness: 2,
-                        color: AppColors.border,
-                      ),
-                      Container(
-                        width: Responsive.w(halfWidth),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            top: BorderSide(
-                              color: AppColors.border,
-                              width: 2,
-                            ),
                           ),
                         ),
-                        padding: EdgeInsets.fromLTRB(
-                          Responsive.w(12),
-                          Responsive.h(10),
-                          Responsive.w(12),
-                          Responsive.h(14),
+                        const VerticalDivider(
+                          width: 2,
+                          thickness: 2,
+                          color: AppColors.border,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: Responsive.sp(14),
-                              color: AppColors.navy,
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.fromLTRB(
+                              Responsive.w(12),
+                              Responsive.h(10),
+                              Responsive.w(12),
+                              Responsive.h(14),
                             ),
-                            SizedBox(width: Responsive.w(6)),
-                            Column(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Estimasi waktu tunggu',
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(9.5),
-                                    color: AppColors.textMuted,
-                                  ),
+                                Icon(
+                                  Icons.access_time,
+                                  size: Responsive.sp(14),
+                                  color: AppColors.navy,
                                 ),
-                                Text(
-                                  '± $estimasiMenit menit',
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(11.5),
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textDark,
-                                    fontFeatures: const [
-                                      FontFeature.tabularFigures(),
-                                    ],
-                                  ),
+                                SizedBox(width: Responsive.w(6)),
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Estimasi waktu tunggu',
+                                      style: TextStyle(
+                                        fontSize: Responsive.sp(9.5),
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                    Text(
+                                      '± $estimasiMenit menit',
+                                      style: TextStyle(
+                                        fontSize: Responsive.sp(11.5),
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textDark,
+                                        fontFeatures: const [
+                                          FontFeature.tabularFigures(),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   ),
                 ],
               ),
