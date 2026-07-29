@@ -23,6 +23,12 @@ class RealtimeService {
   Stream<void> get onCallUpdate => _callUpdateController.stream;
   Stream<void> get onSettingsUpdate => _settingsUpdateController.stream;
 
+  /// Paksa semua cubit yang lagi dengerin `onQueueUpdate` refresh sekarang
+  /// juga — dipakai setelah aksi yang KITA SENDIRI tau pasti ngubah data
+  /// `queues` (mis. reset antrian), daripada nunggu propagasi listener
+  /// Firestore yang kadang ada jeda dikit.
+  void notifyQueueUpdate() => _queueUpdateController.add(null);
+
   bool _subscribed = false;
   final List<StreamSubscription<QuerySnapshot>> _subscriptions = [];
 

@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/services/kiosk_break_service.dart';
 import '../../core/services/queue_reset_service.dart';
+import '../../core/services/realtime_service.dart';
 import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../screens/break_screen.dart';
@@ -266,6 +267,12 @@ Future<void> _runResetQueue(BuildContext context) async {
   String? errorMessage;
   try {
     await QueueResetService.instance.resetToday();
+    // Firestore listener biasanya juga bakal ngasih tau semua cubit yang
+    // dengerin buat refresh, tapi bisa ada jeda propagasi dikit — karena
+    // kita SENDIRI yang tau persis data queues barusan berubah, langsung
+    // paksa refresh sekarang juga biar HomeScreen/QueueInfoScreen yang
+    // lagi kebuka nggak nyangkut nampilin angka lama.
+    RealtimeService.instance.notifyQueueUpdate();
   } catch (e) {
     errorMessage = '$e';
   }
