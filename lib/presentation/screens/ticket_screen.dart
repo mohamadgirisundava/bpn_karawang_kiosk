@@ -477,7 +477,6 @@ class _TicketScreenState extends State<TicketScreen>
                             horizontal: Responsive.w(12),
                             vertical: Responsive.h(16),
                           ),
-                          color: AppColors.white,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
