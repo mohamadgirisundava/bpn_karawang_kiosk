@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Flutter kiosk app for taking queue tickets ("BPN Karawang" — ambil nomor antrian). It talks to a PocketBase backend over the `pocketbase` Dart SDK; there is no local database or offline storage.
+A Flutter kiosk app for taking queue tickets ("BPN Karawang" — ambil nomor antrian). It talks to Cloud Firestore (Firebase project `bpn-karawang-antrian`) via the `cloud_firestore` SDK; there is no local database or offline storage. The app never logs in — Firestore rules deliberately allow the paths it needs (taking a ticket, queueing a print job, Reset Antrian) without auth, validating the shape of what's written instead of who wrote it.
 
-The backend lives in a separate repo (`bpn_karawang_ticket_server`, PocketBase), not necessarily present on disk alongside this one. This file embeds a snapshot of the schema this app actually consumes so it's self-contained — if the backend repo *is* checked out as a sibling directory, its `COLLECTIONS.md` is the fuller, authoritative source (full field list, API rules, other collections like `calls`/`users`) and should win on any conflict.
+Three other apps share the same Firebase project: `bpn_karawang_loket` (admin/petugas, the only one with login), `bpn_karawang_display` (TV call screen), and `bpn_karawang_print_relay` (Windows helper that drives the thermal printer).
+
+**Full backend schema lives in `bpn_karawang_loket/COLLECTIONS.md`** — that's the authoritative source for all 11 collections, their fields, and the reasoning behind the rules. This file no longer duplicates it.
+
+`bpn_karawang_ticket_server` is the retired PocketBase backend. It is not used by any app and its `COLLECTIONS.md` describes a schema that no longer exists — ignore it.
 
 ## Commands
 
@@ -25,53 +29,30 @@ The project targets android/ios/linux/macos/web/windows (all platform folders pr
 Clean Architecture, three layers under `lib/`:
 
 - **`domain/`** — pure business logic: `entities/`, `repositories/` (abstract interfaces), `usecases/` (one class per action, e.g. `CreateQueue`, `GetActiveCounters`).
-- **`data/`** — implementation: `models/` (PocketBase record ↔ entity mapping), `datasources/` (`*_remote_datasource.dart`, direct PocketBase SDK calls), `repositories/` (implements the domain interfaces using the datasources).
+- **`data/`** — implementation: `models/` (Firestore document ↔ entity mapping via `fromFirestore`), `datasources/` (`*_remote_datasource.dart`, direct `cloud_firestore` calls), `repositories/` (implements the domain interfaces using the datasources).
 - **`presentation/`** — `cubits/` (flutter_bloc state management, one cubit+state pair per feature) and `screens/`/`widgets/` (UI).
 
-Data flow: `screen` → `cubit` → `usecase` → `repository` (interface) → `repository_impl` → `remote_datasource` → PocketBase SDK.
+Data flow: `screen` → `cubit` → `usecase` → `repository` (interface) → `repository_impl` → `remote_datasource` → `cloud_firestore`.
 
 **Dependency injection is manual**, not a package like `get_it`: `lib/injection.dart` is a singleton (`Injection.instance`) that wires datasource → repository → usecase → cubit-factory by hand. New features should follow the same wiring pattern there rather than introducing a DI package.
 
-**PocketBase connection**: `lib/core/services/pocketbase_service.dart` is a singleton holding the `PocketBase` client. The base URL is currently hardcoded (`10.10.10.89:8090`, a LAN IP for the kiosk hardware, not localhost) — when developing against a local `pocketbase serve` instance, this needs to point at `127.0.0.1:8090` instead.
+**Firebase connection**: initialized in `lib/main.dart` via `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` — config comes from `firebase_options.dart`, so there is no hardcoded host to switch between dev and prod.
 
-Realtime updates (e.g. live queue status) go through `lib/core/services/realtime_service.dart`, which subscribes via the PocketBase SDK's realtime API rather than polling.
+Realtime updates (e.g. live queue status) go through `lib/core/services/realtime_service.dart`, which uses Firestore `snapshots()` streams rather than polling.
 
-## Backend schema (collections used by this app)
+**Taking a ticket is a transaction.** `QueueRemoteDatasource.createQueue` increments `queue_counters/{counterId}_{date}.lastNumber` and writes the `queues` doc inside one `runTransaction`, so simultaneous presses can't produce duplicate numbers. Printing is deliberately decoupled: a `print_jobs` doc is only created when the user presses "Cetak Tiket Antrian", not when the number is taken.
 
-Snapshot as of 2026-07-16. The backend also has `calls` and `users` collections, not consumed here (likely used by a separate admin/display app).
+## Backend schema
 
-### `counters` (base)
-| Field | Type | Required |
-|---|---|---|
-| `code` | text | yes |
-| `name` | text | yes |
-| `description` | text | no |
-| `color` | text | no |
-| `is_priority` | bool | no |
-| `is_active` | bool | no |
-| `sort_order` | number | no |
+See **`bpn_karawang_loket/COLLECTIONS.md`** — the single authoritative description of all 11 Firestore collections. Don't re-embed a copy here; the last snapshot in this file went stale through the Firebase migration and actively misled.
 
-### `queues` (base)
-| Field | Type | Required |
-|---|---|---|
-| `counter` | relation → `counters` | yes |
-| `queue_number` | number | yes |
-| `queue_code` | text | yes |
-| `status` | select: `waiting`\|`called`\|`serving`\|`completed`\|`skipped` | yes |
-| `date` | date | yes |
-| `taken_at` | date | yes |
-| `called_at` | date | no |
-| `completed_at` | date | no |
-| `desk_number` | number | no |
-| `called_by` | relation → `users` | no |
+Collections this app touches: `counters`, `queues`, `queue_counters`, `print_jobs`, `calls`, `settings`, `announcements`, `voice_announcements`, `audio_schedules`, `prayer_schedule`.
 
-Create rule is public (no auth) — this app can create queue records without logging in. Update/delete require auth, which this app doesn't do — those are handled by the admin/display side.
+Two traps worth knowing before you write a query here:
 
-### `settings` (base)
-| Field | Type | Required |
-|---|---|---|
-| `key` | text | yes (unique) |
-| `value` | text | yes |
-| `description` | text | no |
+- **`date` and `dateKey` hold the same `"YYYY-MM-DD"` string.** Every query filters on `dateKey`; `date` is a PocketBase leftover that's still written. New docs must set both — the rules require it.
+- **`audio_schedules` uses camelCase** (`audioUrl`, `isActive`, `repeatType`, `lastPlayedAt`), unlike every other collection.
 
-All three collections have PocketBase's standard `id`, `created`, `updated` fields.
+## Security rules
+
+`firestore.rules` in this repo is the maintained copy, mirrored in `bpn_karawang_loket`. Both deploy to the same project, so **whichever is deployed last wins — edit both together.** A collection with no `match` block is denied by default, which is how the stale copy in the loket repo silently disabled printing, scheduled audio, and voice announcements until they were resynced on 2026-07-31.
