@@ -53,6 +53,8 @@ Two traps worth knowing before you write a query here:
 - **`date` and `dateKey` hold the same `"YYYY-MM-DD"` string.** Every query filters on `dateKey`; `date` is a PocketBase leftover that's still written. New docs must set both — the rules require it.
 - **`audio_schedules` uses camelCase** (`audioUrl`, `isActive`, `repeatType`, `lastPlayedAt`), unlike every other collection.
 
-## Security rules
+## Security rules & indexes — not in this repo
 
-`firestore.rules` in this repo is the maintained copy, mirrored in `bpn_karawang_loket`. Both deploy to the same project, so **whichever is deployed last wins — edit both together.** A collection with no `match` block is denied by default, which is how the stale copy in the loket repo silently disabled printing, scheduled audio, and voice announcements until they were resynced on 2026-07-31.
+`firestore.rules` and `firestore.indexes.json` live **only in `bpn_karawang_loket`**, which is the sole owner of Firestore config. This repo's `firebase.json` deliberately has no `firestore` block, so `firebase deploy` from here cannot touch them.
+
+They used to be duplicated here, and the two copies drifted badly — the rules diverged (a collection with no `match` block is denied by default) and neither index file was complete, so deploying either one would have dropped live indexes. Consolidated on 2026-07-31. **Don't add a copy back**; change rules in the loket repo and deploy from there.
