@@ -4,6 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import 'background_audio.dart';
+
 import '../../injection.dart';
 
 /// Jenis suara yang bisa diputar di luar panggilan antrian.
@@ -44,6 +46,9 @@ class CeremonyAudioService {
   Future<void> start() async {
     if (_ticker != null) return;
     await _player.setReleaseMode(ReleaseMode.stop);
+    // Didaftarkan biar volumenya otomatis dikecilkan waktu ada
+    // panggilan antrian — lihat BackgroundAudio.
+    BackgroundAudio.register(_player);
     _ticker = Timer.periodic(const Duration(seconds: 20), (_) => _tick());
     _listenForTestRequests();
   }

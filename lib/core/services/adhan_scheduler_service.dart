@@ -4,6 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import 'background_audio.dart';
+
 // Field jadwal sholat yang beneran punya adzan — nggak termasuk imsak,
 // terbit, dan dhuha (itu bukan waktu adzan).
 const List<String> _adhanFields = [
@@ -38,6 +40,9 @@ class AdhanSchedulerService {
   Future<void> start() async {
     if (_ticker != null) return;
     await _player.setReleaseMode(ReleaseMode.stop);
+    // Didaftarkan biar volumenya otomatis dikecilkan waktu ada
+    // panggilan antrian — lihat BackgroundAudio.
+    BackgroundAudio.register(_player);
     await _refreshScheduleIfNeeded();
     _ticker = Timer.periodic(const Duration(seconds: 20), (_) => _tick());
   }

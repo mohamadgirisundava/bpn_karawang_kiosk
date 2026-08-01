@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+
+import 'background_audio.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 const List<String> _ones = [
@@ -286,6 +288,12 @@ class CallAnnouncerService {
   Future<void> _processQueue() async {
     if (_processing) return;
     _processing = true;
+
+    // Adzan/Indonesia Raya/jadwal audio dikecilkan selama panggilan
+    // berbunyi, bukan dihentikan dan bukan bikin panggilannya ditunda.
+    // Pengunjung yang nomornya keluar harus dipanggil sekarang, dan adzan
+    // yang dipotong di tengah lebih buruk daripada adzan yang mengecil.
+    await BackgroundAudio.duck();
     try {
       while (_queue.isNotEmpty) {
         final item = _queue.removeAt(0);
@@ -310,6 +318,7 @@ class CallAnnouncerService {
         await Future<void>.delayed(const Duration(milliseconds: 300));
       }
     } finally {
+      await BackgroundAudio.restore();
       _processing = false;
     }
   }

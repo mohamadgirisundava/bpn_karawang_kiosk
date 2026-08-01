@@ -5,6 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart' show sha1;
 import 'package:flutter/foundation.dart';
+
+import 'background_audio.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
@@ -62,6 +64,7 @@ class ScheduledAudioService {
   }
 
   Future<void> start() async {
+    BackgroundAudio.register(_player);
     if (_sub != null) return;
     await _player.setReleaseMode(ReleaseMode.stop);
 
