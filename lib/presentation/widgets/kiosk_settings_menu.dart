@@ -68,7 +68,7 @@ void showKioskSettingsMenu(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         children: [
           const _PrintRelayStatusTile(),
-          const Divider(height: 1),
+          SizedBox(height: Responsive.h(12)),
           ListTile(
             leading: GlossyAvatar(
               icon: isOnBreak
@@ -350,9 +350,14 @@ void confirmExitKiosk(BuildContext context) {
 /// Status printer buat satpam — dia garda terdepan yang ditanya pengunjung
 /// waktu tiket nggak keluar, jadi dia yang paling perlu tau duluan.
 ///
-/// Ditaruh paling atas menu dan dibaca realtime, bukan sekali waktu menu
-/// dibuka, supaya statusnya ikut berubah kalau printer pulih sambil menu
-/// masih kebuka.
+/// Sengaja BUKAN ListTile dengan avatar glossy kayak baris lain di menu ini:
+/// baris-baris itu semuanya aksi yang bisa ditekan, dan kalau status ikut
+/// bergaya sama, dia kebaca seolah bisa diklik padahal cuma informasi.
+/// Bentuknya panel bertepi berwarna — beda jelas, dan warnanya sekaligus
+/// jadi sinyal kondisi.
+///
+/// Dibaca realtime, bukan sekali waktu menu dibuka, supaya statusnya ikut
+/// berubah kalau printer pulih sambil menu masih kebuka.
 class _PrintRelayStatusTile extends StatelessWidget {
   const _PrintRelayStatusTile();
 
@@ -362,48 +367,71 @@ class _PrintRelayStatusTile extends StatelessWidget {
       stream: PrintRelayStatusService.instance.watch(),
       builder: (context, snapshot) {
         final status = snapshot.data;
-        if (status == null) {
-          return ListTile(
-            leading: SizedBox(
-              width: Responsive.w(38),
-              height: Responsive.w(38),
-              child: const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+        final loading = status == null;
+        final ok = status?.healthy ?? false;
+        final color = loading
+            ? AppColors.textMuted
+            : (ok ? AppColors.green : AppColors.orange);
+
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            horizontal: Responsive.w(12),
+            vertical: Responsive.h(10),
+          ),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            border: Border.all(
+              color: color.withValues(alpha: 0.45),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (loading)
+                SizedBox(
+                  width: Responsive.sp(18),
+                  height: Responsive.sp(18),
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(
+                  ok ? Icons.check_circle : Icons.error_outline,
+                  color: color,
+                  size: Responsive.sp(18),
+                ),
+              SizedBox(width: Responsive.w(10)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      loading
+                          ? 'Memeriksa printer...'
+                          : (ok ? 'Printer Siap' : 'Printer Bermasalah'),
+                      style: TextStyle(
+                        fontSize: Responsive.sp(14),
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    if (!loading) ...[
+                      SizedBox(height: Responsive.h(2)),
+                      Text(
+                        status.message,
+                        style: TextStyle(
+                          fontSize: Responsive.sp(12),
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ),
-            title: Text(
-              'Memeriksa printer...',
-              style: TextStyle(fontSize: Responsive.sp(16)),
-            ),
-          );
-        }
-
-        final ok = status.healthy;
-        final color = ok ? AppColors.green : AppColors.orange;
-        return ListTile(
-          leading: GlossyAvatar(
-            icon: ok ? Icons.print : Icons.print_disabled,
-            size: Responsive.w(38),
-            color: color,
-          ),
-          title: Text(
-            ok ? 'Printer Siap' : 'Printer Bermasalah',
-            style: TextStyle(
-              fontSize: Responsive.sp(16),
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          subtitle: Text(
-            status.message,
-            style: TextStyle(
-              fontSize: Responsive.sp(12),
-              color: AppColors.textMuted,
-            ),
+            ],
           ),
         );
       },
