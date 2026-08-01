@@ -1,24 +1,29 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/services/sound_service.dart';
 import '../../core/utils/audio_feedback.dart';
 import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
+import '../../domain/entities/applicant_type.dart';
 import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
 import '../cubits/ticket/ticket_cubit.dart';
 import '../cubits/ticket/ticket_state.dart';
 import '../widgets/app_footer.dart';
+import '../widgets/glossy_avatar.dart';
+import '../widgets/gradient_button.dart';
 
 /// Ticket Screen - Halaman konfirmasi & cetak tiket setelah memilih counter.
 class TicketScreen extends StatefulWidget {
   final CounterEntity counter;
+  // Diisi cuma kalau berasal dari loket Plotting (lihat
+  // ApplicantTypeScreen) — loket lain langsung ke sini tanpa klasifikasi.
+  final ApplicantType? applicantType;
 
-  const TicketScreen({super.key, required this.counter});
+  const TicketScreen({super.key, required this.counter, this.applicantType});
 
   @override
   State<TicketScreen> createState() => _TicketScreenState();
@@ -71,6 +76,7 @@ class _TicketScreenState extends State<TicketScreen>
     _ticketCubit.takeTicket(
       counterId: widget.counter.id,
       counterCode: widget.counter.code,
+      applicantType: widget.applicantType,
     );
   }
 
@@ -296,46 +302,18 @@ class _TicketScreenState extends State<TicketScreen>
     );
   }
 
-  Widget _buildPrintFailedView(TicketState state) {
-    final nomorTiket = state.ticket?.queueCode ?? '-';
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.print_disabled,
-            size: Responsive.sp(48),
-            color: Colors.red.shade300,
-          ),
-          SizedBox(height: Responsive.h(12)),
-          Text(
-            'Tiket Gagal Dicetak',
-            style: TextStyle(
-              fontSize: Responsive.sp(18),
-              fontWeight: FontWeight.bold,
-              color: AppColors.navy,
-            ),
-          ),
-          SizedBox(height: Responsive.h(6)),
-          Text(
-            'Nomor antrian Anda tetap $nomorTiket dan sudah tercatat. Silakan hubungi petugas jika membutuhkan tiket fisik.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: Responsive.sp(13),
-              color: AppColors.textMuted,
-            ),
-          ),
-          SizedBox(height: Responsive.h(16)),
-          ElevatedButton(
-            onPressed: _selesai,
-            style: AppButtonStyles.elevated(),
-            child: const Text('Selesai'),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildPrintFailedView(TicketState state) => _buildTicketResultView(
+    state,
+    icon: Icons.print_disabled,
+    accent: AppColors.orange,
+    title: 'Tiket Gagal Dicetak',
+    // Alasannya kalau ada; kalau kosong, tetap kasih arahan yang bisa
+    // dikerjakan pengunjung sekarang juga.
+    subtitle: state.printFailureReason.isEmpty
+        ? 'Nomor antrian Anda tetap berlaku. Silakan foto layar ini.'
+        : '${state.printFailureReason} Nomor antrian Anda tetap berlaku.',
+    footnote: 'Foto layar ini sebagai bukti nomor antrian Anda',
+  );
 
   Widget _buildErrorView(TicketState state) {
     return FittedBox(
@@ -367,11 +345,10 @@ class _TicketScreenState extends State<TicketScreen>
             ),
           ),
           SizedBox(height: Responsive.h(16)),
-          ElevatedButton.icon(
+          GradientButton(
+            label: 'Coba Lagi',
+            icon: Icons.refresh,
             onPressed: _ambilNomor,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Coba Lagi'),
-            style: AppButtonStyles.elevated(),
           ),
         ],
       ),
@@ -406,22 +383,10 @@ class _TicketScreenState extends State<TicketScreen>
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: Responsive.w(52),
-                    height: Responsive.w(52),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.navy,
-                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                    ),
-                    child: Text(
-                      widget.counter.code,
-                      style: TextStyle(
-                        fontSize: Responsive.sp(20),
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ),
-                    ),
+                  GlossyAvatar(
+                    code: widget.counter.code,
+                    size: Responsive.w(52),
+                    fontSize: Responsive.sp(20),
                   ),
                   SizedBox(width: Responsive.w(14)),
                   Expanded(
@@ -694,31 +659,42 @@ class _TicketScreenState extends State<TicketScreen>
               SizedBox(height: Responsive.h(12)),
               Container(
                 width: Responsive.w(cardWidth),
-                padding: EdgeInsets.symmetric(
-                  horizontal: Responsive.w(16),
-                  vertical: Responsive.h(8),
+                clipBehavior: Clip.antiAlias,
+                decoration: GlossyStyle.decoration(
+                  AppColors.orange,
+                  radius: AppRadius.chip,
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.navy.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                  border: Border.all(color: AppColors.navy, width: 2),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Icon(
-                      Icons.warning_amber,
-                      color: AppColors.navy,
-                      size: Responsive.sp(18),
+                    GlossyStyle.highlight(
+                      radius: AppRadius.chip,
+                      height: Responsive.h(16),
                     ),
-                    SizedBox(width: Responsive.w(8)),
-                    Text(
-                      'Layanan Prioritas',
-                      style: TextStyle(
-                        fontSize: Responsive.sp(12.5),
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w500,
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: Responsive.w(16),
+                        vertical: Responsive.h(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            color: Colors.white,
+                            size: Responsive.sp(18),
+                          ),
+                          SizedBox(width: Responsive.w(8)),
+                          Text(
+                            'Layanan Prioritas',
+                            style: TextStyle(
+                              fontSize: Responsive.sp(12.5),
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -729,17 +705,14 @@ class _TicketScreenState extends State<TicketScreen>
             SizedBox(
               width: Responsive.w(cardWidth),
               child: hasTicket
-                  ? ElevatedButton.icon(
+                  ? GradientButton(
+                      label: 'Cetak Tiket Antrian',
+                      icon: Icons.print,
                       onPressed: _mulaiCetak,
-                      icon: const Icon(Icons.print),
-                      label: const Text('Cetak Tiket Antrian'),
-                      style: AppButtonStyles.elevated(),
                     )
-                  : ElevatedButton.icon(
+                  : GradientButton(
+                      label: 'Ambil Tiket',
                       onPressed: _ambilNomor,
-                      icon: null,
-                      label: const Text('Ambil Tiket'),
-                      style: AppButtonStyles.elevated(),
                     ),
             ),
             SizedBox(height: Responsive.h(8)),
@@ -759,7 +732,29 @@ class _TicketScreenState extends State<TicketScreen>
     );
   }
 
-  Widget _buildPrintedView(TicketState state) {
+  Widget _buildPrintedView(TicketState state) => _buildTicketResultView(
+    state,
+    icon: Icons.check_circle_outline,
+    accent: AppColors.green,
+    title: 'Tiket Berhasil Dicetak',
+    subtitle: 'Ambil tiket dari mesin pencetak di bawah layar ini',
+    footnote: 'Simpan tiket ini hingga nomor Anda dipanggil',
+  );
+
+  /// Kartu tiket yang sama dipakai buat hasil berhasil MAUPUN gagal.
+  ///
+  /// Waktu cetak gagal, layar inilah satu-satunya bukti nomor antrian yang
+  /// dipegang pengunjung — jadi nomornya harus sebesar dan sejelas versi
+  /// yang tercetak, biar bisa difoto. Versi lama cuma nyelipin nomornya di
+  /// tengah kalimat, susah dibaca apalagi difoto.
+  Widget _buildTicketResultView(
+    TicketState state, {
+    required IconData icon,
+    required Color accent,
+    required String title,
+    required String subtitle,
+    required String footnote,
+  }) {
     final nomorTiket = state.ticket?.queueCode ?? '-';
     final sisaAntrian = state.queueInfo?.waitingCount ?? 0;
     final now = DateTime.now();
@@ -773,23 +768,19 @@ class _TicketScreenState extends State<TicketScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: Responsive.w(64),
-            height: Responsive.w(64),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.green.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.check_circle_outline,
-              size: Responsive.sp(36),
-              color: AppColors.green,
-            ),
+          // Pakai GlossyAvatar, bukan lingkaran datar berwarna transparan —
+          // ikon sebesar ini jadi elemen paling menonjol di layar, kalau
+          // datar dia jadi satu-satunya benda yang nggak ikut sistem desain.
+          GlossyAvatar(
+            icon: icon,
+            size: Responsive.w(64),
+            color: accent,
+            shape: BoxShape.circle,
+            fontSize: Responsive.sp(32),
           ),
           SizedBox(height: Responsive.h(14)),
           Text(
-            'Tiket Berhasil Dicetak',
+            title,
             style: TextStyle(
               fontSize: Responsive.sp(20),
               fontWeight: FontWeight.bold,
@@ -797,11 +788,15 @@ class _TicketScreenState extends State<TicketScreen>
             ),
           ),
           SizedBox(height: Responsive.h(4)),
-          Text(
-            'Ambil tiket dari mesin pencetak di bawah layar ini',
-            style: TextStyle(
-              fontSize: Responsive.sp(12.5),
-              color: AppColors.textMuted,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: Responsive.w(16)),
+            child: Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: Responsive.sp(12.5),
+                color: AppColors.textMuted,
+              ),
             ),
           ),
           SizedBox(height: Responsive.h(18)),
@@ -919,7 +914,7 @@ class _TicketScreenState extends State<TicketScreen>
                       SizedBox(width: Responsive.w(6)),
                       Flexible(
                         child: Text(
-                          'Simpan tiket ini hingga nomor Anda dipanggil',
+                          footnote,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: Responsive.sp(11),
@@ -936,11 +931,7 @@ class _TicketScreenState extends State<TicketScreen>
           SizedBox(height: Responsive.h(20)),
           SizedBox(
             width: Responsive.w(cardWidth),
-            child: ElevatedButton(
-              onPressed: _selesai,
-              style: AppButtonStyles.elevated(),
-              child: const Text('Selesai'),
-            ),
+            child: GradientButton(label: 'Selesai', onPressed: _selesai),
           ),
         ],
       ),

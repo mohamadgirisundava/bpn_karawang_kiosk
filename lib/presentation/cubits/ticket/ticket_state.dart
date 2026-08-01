@@ -19,6 +19,10 @@ class TicketState extends Equatable {
   final PrintJobStatus printJobStatus;
   final String? printJobId;
 
+  /// Kenapa cetaknya gagal — ditampilkan apa adanya ke pengunjung, jadi
+  /// kalimatnya harus menyebut tindakan, bukan istilah teknis.
+  final String printFailureReason;
+
   const TicketState({
     this.status = TicketStatus.confirm,
     this.ticket,
@@ -27,6 +31,7 @@ class TicketState extends Equatable {
     this.errorMessage = '',
     this.printJobStatus = PrintJobStatus.idle,
     this.printJobId,
+    this.printFailureReason = '',
   });
 
   TicketState copyWith({
@@ -37,6 +42,7 @@ class TicketState extends Equatable {
     String? errorMessage,
     PrintJobStatus? printJobStatus,
     String? printJobId,
+    String? printFailureReason,
   }) {
     return TicketState(
       status: status ?? this.status,
@@ -46,6 +52,7 @@ class TicketState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       printJobStatus: printJobStatus ?? this.printJobStatus,
       printJobId: printJobId ?? this.printJobId,
+      printFailureReason: printFailureReason ?? this.printFailureReason,
     );
   }
 
@@ -58,5 +65,6 @@ class TicketState extends Equatable {
     errorMessage,
     printJobStatus,
     printJobId,
+    printFailureReason,
   ];
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../core/services/print_relay_status_service.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/error_message.dart';
@@ -92,6 +93,30 @@ class TicketCubit extends Cubit<TicketState> {
 
     emit(state.copyWith(printJobStatus: PrintJobStatus.printing));
 
+    // Gagal cepat CUMA kalau relay-nya bener-bener mati — di situ hasilnya
+    // udah pasti, jadi nggak ada gunanya bikin pengunjung nunggu timeout.
+    //
+    // Sengaja TIDAK dicek `printer_ok`. Sempat begitu, dan itu bikin jebakan:
+    // printer_ok cuma bisa balik `true` lewat cetak yang berhasil, sementara
+    // cetaknya sendiri diblokir gara-gara printer_ok `false` — sekali jatuh,
+    // nggak bisa bangun. Selama relay hidup, biarin dia yang nyoba: dia
+    // punya retry sendiri dan bakal lapor hasilnya.
+    try {
+      final relay = await PrintRelayStatusService.instance.fetch();
+      if (!relay.alive) {
+        emit(
+          state.copyWith(
+            printJobStatus: PrintJobStatus.failed,
+            printFailureReason: relay.message,
+          ),
+        );
+        return;
+      }
+    } catch (_) {
+      // Nggak bisa baca status = jaringan bermasalah. Jangan dijadiin alasan
+      // gagal duluan — biar alur normal + timeout yang mutusin.
+    }
+
     final String printJobId;
     try {
       printJobId = await _createPrintJob(
@@ -101,7 +126,13 @@ class TicketCubit extends Cubit<TicketState> {
         applicantType: ticket.applicantType,
       );
     } catch (_) {
-      emit(state.copyWith(printJobStatus: PrintJobStatus.failed));
+      emit(
+        state.copyWith(
+          printJobStatus: PrintJobStatus.failed,
+          printFailureReason:
+              'Tidak dapat terhubung ke server. Periksa jaringan.',
+        ),
+      );
       return;
     }
 
@@ -109,7 +140,13 @@ class TicketCubit extends Cubit<TicketState> {
 
     _printJobTimeout = Timer(_printTimeout, () {
       if (state.printJobStatus == PrintJobStatus.printing) {
-        emit(state.copyWith(printJobStatus: PrintJobStatus.failed));
+        emit(
+          state.copyWith(
+            printJobStatus: PrintJobStatus.failed,
+            printFailureReason:
+                'Printer tidak merespons. Silakan hubungi petugas.',
+          ),
+        );
       }
     });
 
@@ -120,7 +157,13 @@ class TicketCubit extends Cubit<TicketState> {
         _printJobSub?.cancel();
       } else if (status == 'error') {
         _printJobTimeout?.cancel();
-        emit(state.copyWith(printJobStatus: PrintJobStatus.failed));
+        emit(
+          state.copyWith(
+            printJobStatus: PrintJobStatus.failed,
+            printFailureReason:
+                'Printer gagal mencetak. Periksa kertas, atau hubungi petugas.',
+          ),
+        );
         _printJobSub?.cancel();
       }
     });

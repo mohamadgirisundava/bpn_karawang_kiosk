@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/services/print_relay_status_service.dart';
+import 'glossy_avatar.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
@@ -9,6 +11,7 @@ import '../../core/services/realtime_service.dart';
 import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../screens/break_screen.dart';
+import 'gradient_button.dart';
 import '../screens/idle_screen.dart';
 
 /// Pindah ke layar Idle biasa, atau ke layar "Sedang Istirahat" kalau
@@ -45,7 +48,11 @@ void showKioskSettingsMenu(BuildContext context) {
       ),
       title: Row(
         children: [
-          Icon(Icons.settings, color: AppColors.navy, size: Responsive.sp(28)),
+          GlossyAvatar(
+            icon: Icons.settings,
+            size: Responsive.w(36),
+            color: AppColors.navy,
+          ),
           SizedBox(width: Responsive.w(8)),
           Text(
             'Pengaturan',
@@ -60,11 +67,15 @@ void showKioskSettingsMenu(BuildContext context) {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const _PrintRelayStatusTile(),
+          const Divider(height: 1),
           ListTile(
-            leading: Icon(
-              isOnBreak ? Icons.play_circle_outline : Icons.pause_circle_outline,
+            leading: GlossyAvatar(
+              icon: isOnBreak
+                  ? Icons.play_circle_outline
+                  : Icons.pause_circle_outline,
+              size: Responsive.w(38),
               color: AppColors.navy,
-              size: Responsive.sp(24),
             ),
             title: Text(
               isOnBreak ? 'Selesai Istirahat' : 'Mulai Istirahat',
@@ -93,10 +104,10 @@ void showKioskSettingsMenu(BuildContext context) {
           Container(height: 2, color: AppColors.border),
           SizedBox(height: Responsive.h(8)),
           ListTile(
-            leading: Icon(
-              Icons.refresh,
+            leading: GlossyAvatar(
+              icon: Icons.refresh,
+              size: Responsive.w(38),
               color: AppColors.navy,
-              size: Responsive.sp(24),
             ),
             title: Text(
               'Restart ke Idle',
@@ -118,10 +129,10 @@ void showKioskSettingsMenu(BuildContext context) {
           Container(height: 2, color: AppColors.border),
           SizedBox(height: Responsive.h(8)),
           ListTile(
-            leading: Icon(
-              Icons.restart_alt,
+            leading: GlossyAvatar(
+              icon: Icons.restart_alt,
+              size: Responsive.w(38),
               color: AppColors.danger,
-              size: Responsive.sp(24),
             ),
             title: Text(
               'Reset Antrian',
@@ -143,10 +154,10 @@ void showKioskSettingsMenu(BuildContext context) {
           Container(height: 2, color: AppColors.border),
           SizedBox(height: Responsive.h(8)),
           ListTile(
-            leading: Icon(
-              Icons.exit_to_app,
+            leading: GlossyAvatar(
+              icon: Icons.exit_to_app,
+              size: Responsive.w(38),
               color: AppColors.danger,
-              size: Responsive.sp(24),
             ),
             title: Text(
               'Keluar Aplikasi',
@@ -190,7 +201,11 @@ void _confirmResetQueue(BuildContext context) {
       ),
       title: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: Responsive.sp(28)),
+          Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.danger,
+            size: Responsive.sp(28),
+          ),
           SizedBox(width: Responsive.w(8)),
           Expanded(
             child: Text(
@@ -209,7 +224,10 @@ void _confirmResetQueue(BuildContext context) {
         'urut tiap loket balik ke 0. Tindakan ini tidak bisa dibatalkan.\n\n'
         'Pastikan memang diperlukan (mis. testing pagi sebelum buka layanan, atau '
         'ada kesalahan sistem) sebelum lanjut.',
-        style: TextStyle(fontSize: Responsive.sp(14), color: AppColors.textMuted),
+        style: TextStyle(
+          fontSize: Responsive.sp(14),
+          color: AppColors.textMuted,
+        ),
       ),
       actions: [
         TextButton(
@@ -217,13 +235,13 @@ void _confirmResetQueue(BuildContext context) {
           style: AppButtonStyles.text(),
           child: const Text('Batal'),
         ),
-        ElevatedButton(
+        GradientButton(
+          label: 'Ya, Reset Antrian',
+          variant: GradientButtonVariant.destructive,
           onPressed: () {
             Navigator.of(dialogContext).pop();
             _runResetQueue(context);
           },
-          style: AppButtonStyles.elevated(background: AppColors.danger),
-          child: const Text('Ya, Reset Antrian'),
         ),
       ],
     ),
@@ -308,7 +326,10 @@ void confirmExitKiosk(BuildContext context) {
       ),
       content: Text(
         'Aplikasi kiosk akan ditutup. Pastikan ini memang diperlukan.',
-        style: TextStyle(fontSize: Responsive.sp(14), color: AppColors.textMuted),
+        style: TextStyle(
+          fontSize: Responsive.sp(14),
+          color: AppColors.textMuted,
+        ),
       ),
       actions: [
         TextButton(
@@ -316,12 +337,76 @@ void confirmExitKiosk(BuildContext context) {
           style: AppButtonStyles.text(),
           child: const Text('Batal'),
         ),
-        ElevatedButton(
+        GradientButton(
+          label: 'Keluar',
+          variant: GradientButtonVariant.destructive,
           onPressed: () => SystemNavigator.pop(),
-          style: AppButtonStyles.elevated(background: AppColors.danger),
-          child: const Text('Keluar'),
         ),
       ],
     ),
   );
+}
+
+/// Status printer buat satpam — dia garda terdepan yang ditanya pengunjung
+/// waktu tiket nggak keluar, jadi dia yang paling perlu tau duluan.
+///
+/// Ditaruh paling atas menu dan dibaca realtime, bukan sekali waktu menu
+/// dibuka, supaya statusnya ikut berubah kalau printer pulih sambil menu
+/// masih kebuka.
+class _PrintRelayStatusTile extends StatelessWidget {
+  const _PrintRelayStatusTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<PrintRelayStatus>(
+      stream: PrintRelayStatusService.instance.watch(),
+      builder: (context, snapshot) {
+        final status = snapshot.data;
+        if (status == null) {
+          return ListTile(
+            leading: SizedBox(
+              width: Responsive.w(38),
+              height: Responsive.w(38),
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            title: Text(
+              'Memeriksa printer...',
+              style: TextStyle(fontSize: Responsive.sp(16)),
+            ),
+          );
+        }
+
+        final ok = status.healthy;
+        final color = ok ? AppColors.green : AppColors.orange;
+        return ListTile(
+          leading: GlossyAvatar(
+            icon: ok ? Icons.print : Icons.print_disabled,
+            size: Responsive.w(38),
+            color: color,
+          ),
+          title: Text(
+            ok ? 'Printer Siap' : 'Printer Bermasalah',
+            style: TextStyle(
+              fontSize: Responsive.sp(16),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          subtitle: Text(
+            status.message,
+            style: TextStyle(
+              fontSize: Responsive.sp(12),
+              color: AppColors.textMuted,
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
