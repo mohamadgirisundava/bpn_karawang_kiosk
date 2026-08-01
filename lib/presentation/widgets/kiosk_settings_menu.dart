@@ -54,7 +54,6 @@ void showKioskSettingsMenu(BuildContext context) {
     builder: (dialogContext) => AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        side: const BorderSide(color: AppColors.border, width: 2),
       ),
       title: Row(
         children: [
@@ -233,7 +232,6 @@ void _confirmResetQueue(BuildContext context) {
     builder: (dialogContext) => AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        side: const BorderSide(color: AppColors.danger, width: 2),
       ),
       title: Row(
         children: [
@@ -291,7 +289,6 @@ Future<void> _runResetQueue(BuildContext context) async {
     builder: (dialogContext) => AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        side: const BorderSide(color: AppColors.border, width: 2),
       ),
       content: Row(
         mainAxisSize: MainAxisSize.min,
@@ -350,7 +347,6 @@ void confirmExitKiosk(BuildContext context) {
     builder: (dialogContext) => AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        side: const BorderSide(color: AppColors.border, width: 2),
       ),
       title: Text(
         'Keluar Aplikasi?',

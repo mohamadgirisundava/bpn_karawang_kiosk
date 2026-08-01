@@ -34,7 +34,6 @@ class ClosedScreen extends StatelessWidget {
         // jadi jangan sampai kelihatan dari aplikasi yang beda.
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
-          side: const BorderSide(color: AppColors.orange, width: 2),
         ),
         title: Row(
           children: [
