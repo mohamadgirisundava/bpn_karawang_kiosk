@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../injection.dart';
 import '../../domain/entities/applicant_type.dart';
 
 /// Remote data source untuk queue collection.
@@ -17,6 +18,18 @@ class QueueRemoteDatasource {
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
+  /// Panjang nomor antrian dari setting `digit_nomor_antrian` — mis. 3
+  /// menghasilkan "A001". Dibatasi 1-6 biar salah ketik nggak bikin kode
+  /// tiket sepanjang satu baris; default 3 kalau belum diatur.
+  Future<int> _queueNumberDigits() async {
+    final raw = await Injection.instance.settingsDatasource.get(
+      'digit_nomor_antrian',
+    );
+    final parsed = int.tryParse(raw.trim());
+    if (parsed == null || parsed < 1 || parsed > 6) return 3;
+    return parsed;
+  }
+
   /// Buat tiket antrian baru dengan nomor urut yang dijamin unik lewat
   /// Firestore transaction — menghindari race condition saat dua request
   /// nge-generate nomor bersamaan.
@@ -30,6 +43,9 @@ class QueueRemoteDatasource {
     ApplicantType? applicantType,
   }) async {
     final dateKey = _todayKey;
+    // Dibaca sebelum transaction dimulai — di dalam transaction Firestore
+    // nggak boleh ada operasi lain selain get/set dokumen.
+    final digits = await _queueNumberDigits();
     final counterRef = _db
         .collection('queue_counters')
         .doc('${counterId}_$dateKey');
@@ -43,7 +59,7 @@ class QueueRemoteDatasource {
               : 0;
           final nextNumber = lastNumber + 1;
           final queueCode =
-              '$counterCode${nextNumber.toString().padLeft(3, '0')}';
+              '$counterCode${nextNumber.toString().padLeft(digits, '0')}';
           final takenAt = DateTime.now().toUtc().toIso8601String();
 
           transaction.set(counterRef, {'lastNumber': nextNumber});
