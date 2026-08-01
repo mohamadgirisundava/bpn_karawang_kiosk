@@ -131,6 +131,9 @@ class CallAnnouncerService {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
   _voiceAnnouncementSub;
   String? _lastAnnouncedCallId;
+
+  /// Sudah lewat snapshot pertama dari langganan `calls` atau belum.
+  bool _primed = false;
   bool _ttsReady = false;
 
   // Antrian ucap — kalau ada beberapa loket manggil atau pengumuman baru
@@ -167,8 +170,23 @@ class CallAnnouncerService {
         .snapshots()
         .listen(
           (snapshot) {
-            if (snapshot.docs.isEmpty) return;
+            if (snapshot.docs.isEmpty) {
+              _primed = true;
+              return;
+            }
             final doc = snapshot.docs.first;
+
+            // Snapshot PERTAMA cuma dicatat, nggak dibacakan. Firestore
+            // ngirim semua dokumen yang sudah ada sebagai "baru" waktu
+            // listener dipasang — tanpa penjaga ini, tiap kali aplikasi
+            // dibuka panggilan terakhir yang masih aktif ikut diteriakkan
+            // ulang, padahal orangnya udah dipanggil dari tadi.
+            if (!_primed) {
+              _primed = true;
+              _lastAnnouncedCallId = doc.id;
+              return;
+            }
+
             if (doc.id == _lastAnnouncedCallId) return;
             _lastAnnouncedCallId = doc.id;
             _queue.add((
@@ -207,6 +225,7 @@ class CallAnnouncerService {
     _callSub = null;
     await _voiceAnnouncementSub?.cancel();
     _voiceAnnouncementSub = null;
+    _primed = false;
     _queue.clear();
   }
 
