@@ -12,18 +12,28 @@ import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../screens/break_screen.dart';
 import 'gradient_button.dart';
+import '../../core/services/operating_hours_service.dart';
+import '../screens/closed_screen.dart';
 import '../screens/idle_screen.dart';
 
-/// Pindah ke layar Idle biasa, atau ke layar "Sedang Istirahat" kalau
-/// mode istirahat lagi aktif — satu titik keputusan dipakai bareng oleh
+/// Pindah ke layar Idle biasa, layar "Sedang Istirahat", atau layar
+/// "Layanan Sedang Tutup" — satu titik keputusan dipakai bareng oleh
 /// idle-timeout HomeScreen dan aksi-aksi di menu pengaturan ini.
-void goToIdleOrBreak(BuildContext context) {
+///
+/// Urutannya: istirahat menang duluan karena itu keputusan sadar satpam
+/// yang lagi berdiri di situ; jam tutup baru dicek setelahnya.
+Future<void> goToIdleOrBreak(BuildContext context) async {
+  final hours = KioskBreakService.instance.isOnBreak
+      ? const OperatingHours(reason: ClosedReason.none)
+      : await OperatingHoursService.instance.check();
+  if (!context.mounted) return;
+
   Navigator.of(context).pushReplacement(
     PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
           KioskBreakService.instance.isOnBreak
           ? const BreakScreen()
-          : const IdleScreen(),
+          : (hours.isClosed ? ClosedScreen(hours: hours) : const IdleScreen()),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(opacity: animation, child: child);
       },
@@ -68,6 +78,32 @@ void showKioskSettingsMenu(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         children: [
           const _PrintRelayStatusTile(),
+          if (OperatingHoursService.instance.isOverridden) ...[
+            SizedBox(height: Responsive.h(8)),
+            ListTile(
+              leading: GlossyAvatar(
+                icon: Icons.lock_open,
+                size: Responsive.w(38),
+                color: AppColors.orange,
+              ),
+              title: Text(
+                'Ikuti Jam Layanan Lagi',
+                style: TextStyle(fontSize: Responsive.sp(16)),
+              ),
+              subtitle: Text(
+                'Saat ini layanan dipaksa buka di luar jam operasional',
+                style: TextStyle(
+                  fontSize: Responsive.sp(12),
+                  color: AppColors.textMuted,
+                ),
+              ),
+              onTap: () {
+                OperatingHoursService.instance.clearOverride();
+                Navigator.of(context).pop();
+                goToIdleOrBreak(context);
+              },
+            ),
+          ],
           SizedBox(height: Responsive.h(12)),
           ListTile(
             leading: GlossyAvatar(

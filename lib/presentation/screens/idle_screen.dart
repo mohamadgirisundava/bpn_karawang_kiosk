@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/adhan_scheduler_service.dart';
+import '../../core/services/operating_hours_service.dart';
 import '../../core/utils/responsive.dart';
+import 'closed_screen.dart';
 import '../widgets/glossy_avatar.dart';
 import 'home_screen.dart';
 
@@ -39,7 +41,28 @@ class _IdleScreenState extends State<IdleScreen>
     super.dispose();
   }
 
-  void _navigateToHome() {
+  /// Dicek di sini, bukan cuma di `goToIdleOrBreak`: aplikasi start dingin
+  /// langsung ke IdleScreen, jadi tanpa ini kiosk yang baru dinyalakan di
+  /// luar jam layanan tetap ngeloloskan pengunjung ke layar ambil nomor.
+  Future<void> _navigateToHome() async {
+    final hours = await OperatingHoursService.instance.check();
+    if (!mounted) return;
+
+    if (hours.isClosed) {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              ClosedScreen(hours: hours),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>

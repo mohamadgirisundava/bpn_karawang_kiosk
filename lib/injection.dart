@@ -28,6 +28,11 @@ class Injection {
   late final QueueRemoteDatasource _queueDatasource;
   late final SettingsRemoteDatasource _settingsDatasource;
 
+  /// Dibuka buat OperatingHoursService — dia baca setting mentah
+  /// (jam_buka/jam_tutup/hari_libur) dari layer service, bukan dari cubit,
+  /// jadi nggak lewat usecase.
+  SettingsRemoteDatasource get settingsDatasource => _settingsDatasource;
+
   // Repositories
   late final CounterRepository _counterRepository;
   late final QueueRepository _queueRepository;
