@@ -134,6 +134,10 @@ class CallAnnouncerService {
 
   /// Sudah lewat snapshot pertama dari langganan `calls` atau belum.
   bool _primed = false;
+
+  /// Batas umur pengumuman suara yang masih layak dibacakan. Lebih tua dari
+  /// ini dianggap sudah nggak relevan.
+  static const Duration _maxAnnouncementAge = Duration(minutes: 5);
   bool _ttsReady = false;
 
   // Antrian ucap — kalau ada beberapa loket manggil atau pengumuman baru
@@ -208,8 +212,36 @@ class CallAnnouncerService {
           (snapshot) {
             for (final change in snapshot.docChanges) {
               if (change.type != DocumentChangeType.added) continue;
-              final text = change.doc.data()?['text'] as String? ?? '';
+              final data = change.doc.data();
+              final text = data?['text'] as String? ?? '';
               if (text.trim().isEmpty) continue;
+
+              // Pengumuman yang sudah basi dilewati, bukan dibacakan telat.
+              // Isinya biasanya terikat waktu ("layanan tutup 15 menit
+              // lagi") — dibacakan dua jam kemudian malah menyesatkan.
+              // Ini kejadian tiap kiosk restart, karena Firestore ngirim
+              // semua dokumen yang belum dibacakan sebagai "baru".
+              final createdAt = DateTime.tryParse(
+                data?['createdAt'] as String? ?? '',
+              );
+              if (createdAt != null &&
+                  DateTime.now().toUtc().difference(createdAt.toUtc()) >
+                      _maxAnnouncementAge) {
+                // Ditandai sudah dibacakan biar nggak nyangkut dan nggak
+                // dicek ulang tiap kali kiosk dibuka.
+                unawaited(
+                  change.doc.reference.update({'played': true}).catchError((
+                    Object e,
+                  ) {
+                    debugPrint(
+                      'CallAnnouncerService: gagal menandai pengumuman '
+                      'basi: $e',
+                    );
+                  }),
+                );
+                continue;
+              }
+
               _queue.add((text: text, announcementRef: change.doc.reference));
             }
             unawaited(_processQueue());
