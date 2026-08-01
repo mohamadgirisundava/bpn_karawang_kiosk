@@ -138,6 +138,12 @@ class CallAnnouncerService {
   /// Batas umur pengumuman suara yang masih layak dibacakan. Lebih tua dari
   /// ini dianggap sudah nggak relevan.
   static const Duration _maxAnnouncementAge = Duration(minutes: 5);
+
+  /// Batas waktu satu kali pengucapan. Kalimat terpanjang ("Nomor antrian
+  /// A001, silakan menuju loket 10") sekitar 8 detik di kecepatan 0.45,
+  /// jadi 20 detik lebih dari cukup — ini jaring pengaman, bukan batas
+  /// normal.
+  static const Duration _speakTimeout = Duration(seconds: 20);
   bool _ttsReady = false;
 
   // Antrian ucap — kalau ada beberapa loket manggil atau pengumuman baru
@@ -147,12 +153,28 @@ class CallAnnouncerService {
 
   Future<void> _ensureTtsReady() async {
     if (_ttsReady) return;
-    _ttsReady = true;
     try {
       await _tts.awaitSpeakCompletion(true);
+
+      // Dicek biar kelihatan di log kalau perangkatnya nggak punya suara
+      // Indonesia — penyebab paling sering TTS diam padahal chime bunyi.
+      // BlueStacks mis. sering nggak punya mesin TTS sama sekali.
+      final hasIndonesian = await _tts.isLanguageAvailable('id-ID');
+      if (hasIndonesian != true) {
+        debugPrint(
+          'CallAnnouncerService: suara id-ID nggak tersedia di perangkat '
+          'ini. Panggilan tetap berbunyi chime, tapi nggak diucapkan. '
+          'Pasang mesin Text-to-Speech + bahasa Indonesia di perangkat.',
+        );
+      }
+
       await _tts.setLanguage('id-ID');
       await _tts.setSpeechRate(0.45);
       await _tts.setVolume(1.0);
+      // Ditandai siap SETELAH setup sukses, bukan sebelum — kalau ditandai
+      // di awal lalu setupnya gagal, percobaan berikutnya nggak pernah
+      // nyoba lagi.
+      _ttsReady = true;
     } catch (e) {
       debugPrint('CallAnnouncerService: gagal setup TTS: $e');
     }
@@ -322,7 +344,26 @@ class CallAnnouncerService {
   Future<void> _speak(String text) async {
     try {
       await _ensureTtsReady();
-      await _tts.speak(text);
+      // `awaitSpeakCompletion(true)` bikin speak() nunggu laporan "selesai"
+      // dari mesin TTS. Kalau mesinnya nggak ada, laporan itu nggak pernah
+      // datang dan await-nya MENGGANTUNG SELAMANYA — dan karena
+      // `_processQueue` nunggu di sini, `_processing` nggak pernah dilepas.
+      // Akibatnya bukan cuma panggilan ini yang bisu: semua panggilan dan
+      // pengumuman sesudahnya ikut mati diam-diam.
+      await _tts
+          .speak(text)
+          .timeout(
+            _speakTimeout,
+            onTimeout: () {
+              debugPrint(
+                'CallAnnouncerService: TTS nggak selesai dalam '
+                '${_speakTimeout.inSeconds} detik — dilewati biar antrian '
+                'pengumuman nggak ikut macet.',
+              );
+              unawaited(_tts.stop());
+              return 0;
+            },
+          );
     } catch (e) {
       debugPrint('CallAnnouncerService: gagal ngomong: $e');
     }
