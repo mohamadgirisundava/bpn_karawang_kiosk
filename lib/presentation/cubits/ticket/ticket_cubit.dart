@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/error_message.dart';
+import '../../../domain/entities/applicant_type.dart';
 import '../../../domain/usecases/create_print_job.dart';
 import '../../../domain/usecases/create_queue.dart';
 import '../../../domain/usecases/get_estimate_per_person.dart';
@@ -57,6 +58,7 @@ class TicketCubit extends Cubit<TicketState> {
   Future<void> takeTicket({
     required String counterId,
     required String counterCode,
+    ApplicantType? applicantType,
   }) async {
     emit(state.copyWith(status: TicketStatus.loading));
 
@@ -64,6 +66,7 @@ class TicketCubit extends Cubit<TicketState> {
       final ticket = await _createQueue(
         counterId: counterId,
         counterCode: counterCode,
+        applicantType: applicantType,
       );
 
       emit(state.copyWith(status: TicketStatus.success, ticket: ticket));
@@ -95,6 +98,7 @@ class TicketCubit extends Cubit<TicketState> {
         queueCode: ticket.queueCode,
         counterName: counterName,
         takenAt: ticket.takenAt ?? DateTime.now().toUtc().toIso8601String(),
+        applicantType: ticket.applicantType,
       );
     } catch (_) {
       emit(state.copyWith(printJobStatus: PrintJobStatus.failed));

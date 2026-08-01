@@ -10,11 +10,13 @@ class CreatePrintJob {
     required String queueCode,
     required String counterName,
     required String takenAt,
+    String? applicantType,
   }) {
     return repository.createPrintJob(
       queueCode: queueCode,
       counterName: counterName,
       takenAt: takenAt,
+      applicantType: applicantType,
     );
   }
 }

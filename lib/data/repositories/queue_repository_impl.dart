@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../domain/entities/applicant_type.dart';
 import '../../domain/entities/queue_entity.dart';
 import '../../domain/entities/queue_info.dart';
 import '../../domain/repositories/queue_repository.dart';
@@ -15,10 +16,12 @@ class QueueRepositoryImpl implements QueueRepository {
   Future<QueueEntity> createQueue({
     required String counterId,
     required String counterCode,
+    ApplicantType? applicantType,
   }) async {
     final doc = await datasource.createQueue(
       counterId: counterId,
       counterCode: counterCode,
+      applicantType: applicantType,
     );
 
     return QueueModel.fromDoc(doc);
@@ -29,11 +32,13 @@ class QueueRepositoryImpl implements QueueRepository {
     required String queueCode,
     required String counterName,
     required String takenAt,
+    String? applicantType,
   }) {
     return datasource.createPrintJob(
       queueCode: queueCode,
       counterName: counterName,
       takenAt: takenAt,
+      applicantType: applicantType,
     );
   }
 

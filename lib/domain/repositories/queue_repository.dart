@@ -1,3 +1,4 @@
+import '../entities/applicant_type.dart';
 import '../entities/queue_entity.dart';
 import '../entities/queue_info.dart';
 
@@ -7,6 +8,7 @@ abstract class QueueRepository {
   Future<QueueEntity> createQueue({
     required String counterId,
     required String counterCode,
+    ApplicantType? applicantType,
   });
 
   /// Buat job pencetakan tiket fisik (dipanggil saat user menekan tombol
@@ -15,6 +17,7 @@ abstract class QueueRepository {
     required String queueCode,
     required String counterName,
     required String takenAt,
+    String? applicantType,
   });
 
   /// Pantau status job cetak tiket fisik terkait satu tiket antrian.

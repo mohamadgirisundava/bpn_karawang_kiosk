@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../domain/entities/applicant_type.dart';
 
 /// Remote data source untuk queue collection.
 class QueueRemoteDatasource {
@@ -26,6 +27,7 @@ class QueueRemoteDatasource {
   Future<DocumentSnapshot<Map<String, dynamic>>> createQueue({
     required String counterId,
     required String counterCode,
+    ApplicantType? applicantType,
   }) async {
     final dateKey = _todayKey;
     final counterRef = _db
@@ -33,26 +35,31 @@ class QueueRemoteDatasource {
         .doc('${counterId}_$dateKey');
     final queueRef = _db.collection('queues').doc();
 
-    await _db.runTransaction((transaction) async {
-      final counterSnap = await transaction.get(counterRef);
-      final lastNumber = counterSnap.exists
-          ? (counterSnap.data()?['lastNumber'] as int? ?? 0)
-          : 0;
-      final nextNumber = lastNumber + 1;
-      final queueCode = '$counterCode${nextNumber.toString().padLeft(3, '0')}';
-      final takenAt = DateTime.now().toUtc().toIso8601String();
+    await _db
+        .runTransaction((transaction) async {
+          final counterSnap = await transaction.get(counterRef);
+          final lastNumber = counterSnap.exists
+              ? (counterSnap.data()?['lastNumber'] as int? ?? 0)
+              : 0;
+          final nextNumber = lastNumber + 1;
+          final queueCode =
+              '$counterCode${nextNumber.toString().padLeft(3, '0')}';
+          final takenAt = DateTime.now().toUtc().toIso8601String();
 
-      transaction.set(counterRef, {'lastNumber': nextNumber});
-      transaction.set(queueRef, {
-        'counter': counterId,
-        'queue_number': nextNumber,
-        'queue_code': queueCode,
-        'status': 'waiting',
-        'date': dateKey,
-        'dateKey': dateKey,
-        'taken_at': takenAt,
-      });
-    }).timeout(_timeout);
+          transaction.set(counterRef, {'lastNumber': nextNumber});
+          transaction.set(queueRef, {
+            'counter': counterId,
+            'queue_number': nextNumber,
+            'queue_code': queueCode,
+            'status': 'waiting',
+            'date': dateKey,
+            'dateKey': dateKey,
+            'taken_at': takenAt,
+            if (applicantType != null)
+              'applicant_type': applicantTypeToFirestore(applicantType),
+          });
+        })
+        .timeout(_timeout);
 
     return await queueRef.get();
   }
@@ -65,16 +72,23 @@ class QueueRemoteDatasource {
     required String queueCode,
     required String counterName,
     required String takenAt,
+    String? applicantType,
   }) async {
     final dateKey = _todayKey;
-    final printJobRef = await _db.collection('print_jobs').add({
-      'status': 'pending',
-      'queue_code': queueCode,
-      'counter_name': counterName,
-      'date': dateKey,
-      'dateKey': dateKey,
-      'taken_at': takenAt,
-    }).timeout(_timeout);
+    final printJobRef = await _db
+        .collection('print_jobs')
+        .add({
+          'status': 'pending',
+          'queue_code': queueCode,
+          'counter_name': counterName,
+          'date': dateKey,
+          'dateKey': dateKey,
+          'taken_at': takenAt,
+          // Cuma ada di tiket layanan Plotting — relay nyetak ini di bawah
+          // nama layanannya biar petugas langsung tau tanpa nanya lagi.
+          if (applicantType != null) 'applicant_type': applicantType,
+        })
+        .timeout(_timeout);
 
     return printJobRef.id;
   }
