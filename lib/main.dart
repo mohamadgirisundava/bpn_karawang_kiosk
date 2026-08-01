@@ -8,6 +8,7 @@ import 'core/constants/app_colors.dart';
 import 'core/services/adhan_scheduler_service.dart';
 import 'core/services/call_announcer_service.dart';
 import 'core/services/kiosk_foreground_task.dart';
+import 'core/services/ceremony_audio_service.dart';
 import 'core/services/scheduled_audio_service.dart';
 import 'firebase_options.dart';
 import 'injection.dart';
@@ -48,6 +49,10 @@ void main() async {
   // Agenda audio custom bikinan admin sendiri (jam berapa, bunyi apa,
   // sekali/tiap hari) — lihat ScheduledAudioService.
   unawaited(ScheduledAudioService.instance.start());
+
+  // Indonesia Raya terjadwal + penerima uji suara dari Admin. Semua suara
+  // sistem keluar dari kiosk — Display TV nggak punya speaker.
+  unawaited(CeremonyAudioService.instance.start());
 
   runApp(const MyApp());
 
