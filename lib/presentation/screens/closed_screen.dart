@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/services/operating_hours_service.dart';
@@ -27,39 +28,54 @@ class ClosedScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        // Bentuk, ikon judul, dan pasangan tombol Batal + GradientButton
+        // sengaja disamakan persis dengan dialog Reset Antrian & Keluar
+        // Aplikasi di menu satpam — semuanya konfirmasi tindakan penting,
+        // jadi jangan sampai kelihatan dari aplikasi yang beda.
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
+          side: const BorderSide(color: AppColors.orange, width: 2),
         ),
-        title: Text(
-          'Tetap buka layanan?',
-          style: TextStyle(
-            fontSize: Responsive.sp(18),
-            fontWeight: FontWeight.bold,
-            color: AppColors.navy,
-          ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.lock_open,
+              color: AppColors.orange,
+              size: Responsive.sp(28),
+            ),
+            SizedBox(width: Responsive.w(8)),
+            Expanded(
+              child: Text(
+                'Tetap Buka Layanan?',
+                style: TextStyle(
+                  fontSize: Responsive.sp(18),
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.navy,
+                ),
+              ),
+            ),
+          ],
         ),
         content: Text(
           '${hours.message}\n\n'
           'Kalau layanan sebenarnya sedang berjalan, kiosk bisa dibuka '
           'sekarang. Pengaturan jam tidak diubah, dan kiosk kembali normal '
           'besok.',
-          style: TextStyle(fontSize: Responsive.sp(14)),
+          style: TextStyle(
+            fontSize: Responsive.sp(14),
+            color: AppColors.textMuted,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text('Batal', style: TextStyle(fontSize: Responsive.sp(14))),
+            style: AppButtonStyles.text(),
+            child: const Text('Batal'),
           ),
-          TextButton(
+          GradientButton(
+            label: 'Ya, Buka Layanan',
+            variant: GradientButtonVariant.warning,
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(
-              'Tetap Buka',
-              style: TextStyle(
-                fontSize: Responsive.sp(14),
-                fontWeight: FontWeight.bold,
-                color: AppColors.navy,
-              ),
-            ),
           ),
         ],
       ),
