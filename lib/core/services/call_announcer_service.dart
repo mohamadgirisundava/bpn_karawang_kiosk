@@ -62,7 +62,9 @@ String _numberToWords(int n) {
   }
   final thousands = n ~/ 1000;
   final rest = n % 1000;
-  final thousandsWord = thousands == 1 ? 'seribu' : '${_numberToWords(thousands)} ribu';
+  final thousandsWord = thousands == 1
+      ? 'seribu'
+      : '${_numberToWords(thousands)} ribu';
   return rest == 0 ? thousandsWord : '$thousandsWord ${_numberToWords(rest)}';
 }
 
@@ -70,7 +72,10 @@ String _numberToWords(int n) {
 ({String prefix, int? number}) _parseQueueCode(String code) {
   final match = RegExp(r'^([A-Za-z]*)0*(\d+)$').firstMatch(code);
   if (match == null) return (prefix: '', number: null);
-  return (prefix: match.group(1)!.toUpperCase(), number: int.parse(match.group(2)!));
+  return (
+    prefix: match.group(1)!.toUpperCase(),
+    number: int.parse(match.group(2)!),
+  );
 }
 
 /// Baca field angka dari data Firestore secara toleran — beberapa dokumen
@@ -86,8 +91,12 @@ int _asInt(dynamic value, {int fallback = 0}) {
 String _buildAnnouncementText(Map<String, dynamic> data) {
   final code = data['queue_code'] as String? ?? '';
   final parsed = _parseQueueCode(code);
-  final spokenNumber = parsed.number == null ? code : _numberToWords(parsed.number!);
-  final spokenCode = parsed.prefix.isNotEmpty ? '${parsed.prefix}, $spokenNumber' : spokenNumber;
+  final spokenNumber = parsed.number == null
+      ? code
+      : _numberToWords(parsed.number!);
+  final spokenCode = parsed.prefix.isNotEmpty
+      ? '${parsed.prefix}, $spokenNumber'
+      : spokenNumber;
   final deskNumber = _asInt(data['desk_number']);
   final desk = deskNumber != 0 ? ', silakan menuju loket $deskNumber' : '';
   return 'Nomor antrian $spokenCode$desk';
@@ -119,7 +128,8 @@ class CallAnnouncerService {
   final FlutterTts _tts = FlutterTts();
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _callSub;
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _voiceAnnouncementSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+  _voiceAnnouncementSub;
   String? _lastAnnouncedCallId;
   bool _ttsReady = false;
 
@@ -161,10 +171,14 @@ class CallAnnouncerService {
             final doc = snapshot.docs.first;
             if (doc.id == _lastAnnouncedCallId) return;
             _lastAnnouncedCallId = doc.id;
-            _queue.add((text: _buildAnnouncementText(doc.data()), announcementRef: null));
+            _queue.add((
+              text: _buildAnnouncementText(doc.data()),
+              announcementRef: null,
+            ));
             unawaited(_processQueue());
           },
-          onError: (Object e) => debugPrint('CallAnnouncerService: listen error (calls): $e'),
+          onError: (Object e) =>
+              debugPrint('CallAnnouncerService: listen error (calls): $e'),
         );
 
     _voiceAnnouncementSub = FirebaseFirestore.instance
@@ -182,8 +196,9 @@ class CallAnnouncerService {
             }
             unawaited(_processQueue());
           },
-          onError: (Object e) =>
-              debugPrint('CallAnnouncerService: listen error (voice_announcements): $e'),
+          onError: (Object e) => debugPrint(
+            'CallAnnouncerService: listen error (voice_announcements): $e',
+          ),
         );
   }
 
@@ -210,8 +225,12 @@ class CallAnnouncerService {
           // berstatus "belum dibacain" dan bakal diulang pas app nyala
           // lagi, daripada hilang kebaca gara-gara nggak sempet mark.
           unawaited(
-            item.announcementRef!.update({'played': true}).catchError((Object e) {
-              debugPrint('CallAnnouncerService: gagal update status played: $e');
+            item.announcementRef!.update({'played': true}).catchError((
+              Object e,
+            ) {
+              debugPrint(
+                'CallAnnouncerService: gagal update status played: $e',
+              );
             }),
           );
         }
@@ -230,7 +249,9 @@ class CallAnnouncerService {
       if (!completer.isCompleted) completer.complete();
     });
 
-    _chimePlayer.play(AssetSource('audio/chime.wav'), volume: 0.8).catchError((Object e) {
+    _chimePlayer.play(AssetSource('audio/chime.wav'), volume: 0.8).catchError((
+      Object e,
+    ) {
       debugPrint('CallAnnouncerService: gagal muter chime: $e');
       sub.cancel();
       if (!completer.isCompleted) completer.complete();

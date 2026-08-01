@@ -13,6 +13,7 @@ class CounterModel extends CounterEntity {
     required super.color,
     required super.icon,
     super.isPriority,
+    super.isPlotting,
   });
 
   /// Construct dari Firestore DocumentSnapshot.
@@ -24,6 +25,7 @@ class CounterModel extends CounterEntity {
     final colorHex = data['color'] as String? ?? '';
     final iconName = data['icon'] as String? ?? '';
     final isPriority = data['is_priority'] as bool? ?? false;
+    final isPlotting = data['is_plotting'] as bool? ?? false;
 
     return CounterModel(
       id: doc.id,
@@ -33,6 +35,7 @@ class CounterModel extends CounterEntity {
       color: _parseColor(colorHex),
       icon: _parseIcon(iconName),
       isPriority: isPriority,
+      isPlotting: isPlotting,
     );
   }
 

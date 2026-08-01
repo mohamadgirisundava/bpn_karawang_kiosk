@@ -39,14 +39,18 @@ class RealtimeService {
     try {
       _subscriptions.add(
         _db.collection('queues').snapshots().listen((snapshot) {
-          debugPrint('Realtime queues: ${snapshot.docChanges.length} change(s)');
+          debugPrint(
+            'Realtime queues: ${snapshot.docChanges.length} change(s)',
+          );
           _queueUpdateController.add(null);
         }),
       );
 
       _subscriptions.add(
         _db.collection('counters').snapshots().listen((snapshot) {
-          debugPrint('Realtime counters: ${snapshot.docChanges.length} change(s)');
+          debugPrint(
+            'Realtime counters: ${snapshot.docChanges.length} change(s)',
+          );
           _counterUpdateController.add(null);
         }),
       );
@@ -60,7 +64,9 @@ class RealtimeService {
 
       _subscriptions.add(
         _db.collection('settings').snapshots().listen((snapshot) {
-          debugPrint('Realtime settings: ${snapshot.docChanges.length} change(s)');
+          debugPrint(
+            'Realtime settings: ${snapshot.docChanges.length} change(s)',
+          );
           _settingsUpdateController.add(null);
         }),
       );

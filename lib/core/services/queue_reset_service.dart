@@ -40,7 +40,9 @@ class QueueResetService {
       batch.delete(doc.reference);
     }
     for (final counterDoc in activeCounters.docs) {
-      batch.delete(db.collection('queue_counters').doc('${counterDoc.id}_$todayKey'));
+      batch.delete(
+        db.collection('queue_counters').doc('${counterDoc.id}_$todayKey'),
+      );
     }
     await batch.commit();
   }

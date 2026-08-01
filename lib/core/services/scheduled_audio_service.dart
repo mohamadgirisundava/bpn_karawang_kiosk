@@ -73,7 +73,8 @@ class ScheduledAudioService {
           (snapshot) {
             _entries = snapshot.docs.map(_ScheduleEntry.fromDoc).toList();
           },
-          onError: (Object e) => debugPrint('ScheduledAudioService: listen error: $e'),
+          onError: (Object e) =>
+              debugPrint('ScheduledAudioService: listen error: $e'),
         );
 
     _ticker = Timer.periodic(const Duration(seconds: 20), (_) => _tick());
@@ -109,7 +110,9 @@ class ScheduledAudioService {
       final localPath = await _cachedFilePath(entry);
       await _player.stop();
       await _player.play(DeviceFileSource(localPath), volume: 1.0);
-      debugPrint('ScheduledAudioService: muter "${entry.label}" (${entry.time}).');
+      debugPrint(
+        'ScheduledAudioService: muter "${entry.label}" (${entry.time}).',
+      );
       await _markPlayed(entry);
     } catch (e) {
       debugPrint('ScheduledAudioService: gagal muter "${entry.label}": $e');
@@ -132,7 +135,9 @@ class ScheduledAudioService {
           .doc(entry.id)
           .update(update);
     } catch (e) {
-      debugPrint('ScheduledAudioService: gagal update status "${entry.label}": $e');
+      debugPrint(
+        'ScheduledAudioService: gagal update status "${entry.label}": $e',
+      );
     }
   }
 

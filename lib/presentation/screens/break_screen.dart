@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/utils/responsive.dart';
+import '../widgets/glossy_avatar.dart';
+import '../widgets/gradient_button.dart';
 import '../widgets/kiosk_settings_menu.dart';
 
 /// Ditampilkan alih-alih IdleScreen kalau kiosk lagi "Mode Istirahat" —
@@ -33,18 +35,11 @@ class BreakScreen extends StatelessWidget {
                     width: Responsive.w(160),
                     height: Responsive.w(160),
                     errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: Responsive.w(160),
-                        height: Responsive.w(160),
-                        decoration: const BoxDecoration(
-                          color: AppColors.navy,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.account_balance,
-                          size: Responsive.sp(100),
-                          color: AppColors.white,
-                        ),
+                      return GlossyAvatar(
+                        icon: Icons.account_balance,
+                        shape: BoxShape.circle,
+                        size: Responsive.w(160),
+                        fontSize: Responsive.sp(100),
                       );
                     },
                   ),
@@ -61,31 +56,42 @@ class BreakScreen extends StatelessWidget {
                 ),
                 SizedBox(height: Responsive.h(32)),
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: Responsive.w(20),
-                    vertical: Responsive.h(10),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: GlossyStyle.decoration(
+                    AppColors.navy,
+                    radius: AppRadius.chip,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.navy.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                    border: Border.all(color: AppColors.navy, width: 2),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Icon(
-                        Icons.pause_circle_outline,
-                        color: AppColors.navy,
-                        size: Responsive.sp(20),
+                      GlossyStyle.highlight(
+                        radius: AppRadius.chip,
+                        height: Responsive.h(18),
                       ),
-                      SizedBox(width: Responsive.w(8)),
-                      Text(
-                        'SEDANG ISTIRAHAT',
-                        style: TextStyle(
-                          fontSize: Responsive.sp(16),
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                          color: AppColors.navy,
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.w(20),
+                          vertical: Responsive.h(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.pause_circle_outline,
+                              color: Colors.white,
+                              size: Responsive.sp(20),
+                            ),
+                            SizedBox(width: Responsive.w(8)),
+                            Text(
+                              'SEDANG ISTIRAHAT',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(16),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

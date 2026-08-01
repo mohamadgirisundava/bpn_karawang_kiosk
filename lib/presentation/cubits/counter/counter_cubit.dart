@@ -62,7 +62,9 @@ class CounterCubit extends Cubit<CounterState> {
         emit(state.copyWith(queueInfo: info));
         return;
       } catch (e) {
-        debugPrint('CounterCubit: gagal ambil info antrian (percobaan $attempt): $e');
+        debugPrint(
+          'CounterCubit: gagal ambil info antrian (percobaan $attempt): $e',
+        );
         if (attempt == maxAttempts) return; // Pakai data lama, nyerah.
         await Future<void>.delayed(const Duration(seconds: 2));
       }

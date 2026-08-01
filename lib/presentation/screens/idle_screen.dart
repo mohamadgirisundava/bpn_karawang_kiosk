@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/adhan_scheduler_service.dart';
 import '../../core/utils/responsive.dart';
+import '../widgets/glossy_avatar.dart';
 import 'home_screen.dart';
 
 /// Idle Screen - tampil saat tidak ada interaksi.
@@ -74,18 +75,11 @@ class _IdleScreenState extends State<IdleScreen>
                         width: Responsive.w(160),
                         height: Responsive.w(160),
                         errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: Responsive.w(160),
-                            height: Responsive.w(160),
-                            decoration: const BoxDecoration(
-                              color: AppColors.navy,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.account_balance,
-                              size: Responsive.sp(100),
-                              color: AppColors.white,
-                            ),
+                          return GlossyAvatar(
+                            icon: Icons.account_balance,
+                            shape: BoxShape.circle,
+                            size: Responsive.w(160),
+                            fontSize: Responsive.sp(100),
                           );
                         },
                       ),

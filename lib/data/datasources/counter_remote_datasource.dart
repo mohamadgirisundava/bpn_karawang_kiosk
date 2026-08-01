@@ -9,7 +9,8 @@ class CounterRemoteDatasource {
   static const Duration _timeout = Duration(seconds: 5);
 
   /// Ambil semua counter aktif, urut sort_order.
-  Future<List<DocumentSnapshot<Map<String, dynamic>>>> getActiveCounters() async {
+  Future<List<DocumentSnapshot<Map<String, dynamic>>>>
+  getActiveCounters() async {
     final result = await _db
         .collection('counters')
         .where('is_active', isEqualTo: true)

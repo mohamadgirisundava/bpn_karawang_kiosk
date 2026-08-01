@@ -10,6 +10,9 @@ class CounterEntity extends Equatable {
   final Color color;
   final IconData icon;
   final bool isPriority;
+  // Loket "Plotting" — kiosk nampilin langkah pilih "Pemohon Langsung/
+  // Prioritas atau Kuasa" sebelum ambil tiket khusus buat loket ini.
+  final bool isPlotting;
 
   const CounterEntity({
     required this.id,
@@ -19,8 +22,16 @@ class CounterEntity extends Equatable {
     required this.color,
     required this.icon,
     this.isPriority = false,
+    this.isPlotting = false,
   });
 
   @override
-  List<Object?> get props => [id, code, name, description, isPriority];
+  List<Object?> get props => [
+    id,
+    code,
+    name,
+    description,
+    isPriority,
+    isPlotting,
+  ];
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/utils/responsive.dart';
@@ -9,6 +8,8 @@ import '../../injection.dart';
 import '../cubits/queue/queue_cubit.dart';
 import '../cubits/queue/queue_state.dart';
 import '../widgets/app_footer.dart';
+import '../widgets/glossy_badge.dart';
+import '../widgets/gradient_button.dart';
 
 /// Queue Info Screen - Menampilkan informasi antrian berjalan
 /// dan estimasi sisa antrian untuk setiap counter.
@@ -141,11 +142,10 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                                     ),
                                   ),
                                   SizedBox(height: Responsive.h(16)),
-                                  ElevatedButton.icon(
+                                  GradientButton(
+                                    label: 'Coba Lagi',
+                                    icon: Icons.refresh,
                                     onPressed: () => _queueInfoCubit.loadData(),
-                                    icon: const Icon(Icons.refresh),
-                                    label: const Text('Coba Lagi'),
-                                    style: AppButtonStyles.elevated(),
                                   ),
                                 ],
                               ),
@@ -209,10 +209,9 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                     SizedBox(height: Responsive.h(16)),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: GradientButton(
+                        label: 'Kembali ke Menu Utama',
                         onPressed: () => Navigator.of(context).pop(),
-                        style: AppButtonStyles.elevated(),
-                        child: const Text('Kembali ke Menu Utama'),
                       ),
                     ),
                   ],
@@ -323,28 +322,11 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
           ),
           if (counter.isPriority)
             Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: Responsive.w(8),
-                  vertical: Responsive.h(3),
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.navy,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(AppRadius.card),
-                    bottomLeft: Radius.circular(AppRadius.chip),
-                  ),
-                ),
-                child: Text(
-                  'PRIORITAS',
-                  style: TextStyle(
-                    fontSize: Responsive.sp(8),
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
+              top: Responsive.h(10),
+              right: Responsive.w(10),
+              child: const GlossyBadge(
+                label: 'PRIORITAS',
+                color: AppColors.orange,
               ),
             ),
         ],

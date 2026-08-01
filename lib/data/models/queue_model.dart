@@ -15,6 +15,7 @@ class QueueModel extends QueueEntity {
     super.completedAt,
     super.calledBy,
     super.deskNumber,
+    super.applicantType,
   });
 
   /// Construct dari Firestore DocumentSnapshot.
@@ -32,6 +33,7 @@ class QueueModel extends QueueEntity {
       completedAt: data['completed_at'] as String?,
       calledBy: data['called_by'] as String?,
       deskNumber: data['desk_number'] as String?,
+      applicantType: data['applicant_type'] as String?,
     );
   }
 }

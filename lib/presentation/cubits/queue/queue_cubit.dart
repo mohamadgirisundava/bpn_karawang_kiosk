@@ -68,7 +68,9 @@ class QueueInfoCubit extends Cubit<QueueInfoState> {
         emit(state.copyWith(queueInfo: info));
         return;
       } catch (e) {
-        debugPrint('QueueInfoCubit: gagal ambil info antrian (percobaan $attempt): $e');
+        debugPrint(
+          'QueueInfoCubit: gagal ambil info antrian (percobaan $attempt): $e',
+        );
         if (attempt == maxAttempts) return;
         await Future<void>.delayed(const Duration(seconds: 2));
       }

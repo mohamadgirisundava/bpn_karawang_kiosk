@@ -41,7 +41,8 @@ Future<void> startKioskForegroundTask() async {
 
   FlutterForegroundTask.initCommunicationPort();
 
-  final notificationPermission = await FlutterForegroundTask.checkNotificationPermission();
+  final notificationPermission =
+      await FlutterForegroundTask.checkNotificationPermission();
   if (notificationPermission != NotificationPermission.granted) {
     await FlutterForegroundTask.requestNotificationPermission();
   }
@@ -75,7 +76,8 @@ Future<void> startKioskForegroundTask() async {
   await FlutterForegroundTask.startService(
     serviceId: 501,
     notificationTitle: 'Kiosk Antrian BPN Karawang',
-    notificationText: 'Berjalan di latar belakang — pengumuman antrian tetap aktif.',
+    notificationText:
+        'Berjalan di latar belakang — pengumuman antrian tetap aktif.',
     callback: kioskForegroundTaskStartCallback,
   );
 }

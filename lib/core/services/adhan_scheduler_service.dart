@@ -57,7 +57,9 @@ class AdhanSchedulerService {
           .doc(dateKey)
           .get();
       if (!doc.exists) {
-        debugPrint('AdhanSchedulerService: jadwal $dateKey belum ada di prayer_schedule.');
+        debugPrint(
+          'AdhanSchedulerService: jadwal $dateKey belum ada di prayer_schedule.',
+        );
         return;
       }
       final data = doc.data() ?? {};

@@ -13,6 +13,7 @@ class QueueEntity extends Equatable {
   final String? completedAt;
   final String? calledBy;
   final String? deskNumber;
+  final String? applicantType;
 
   const QueueEntity({
     required this.id,
@@ -26,6 +27,7 @@ class QueueEntity extends Equatable {
     this.completedAt,
     this.calledBy,
     this.deskNumber,
+    this.applicantType,
   });
 
   @override
