@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../injection.dart';
+
 /// Service untuk realtime subscription ke semua collection Firestore.
 class RealtimeService {
   RealtimeService._();
@@ -67,6 +69,16 @@ class RealtimeService {
           debugPrint(
             'Realtime settings: ${snapshot.docChanges.length} change(s)',
           );
+          // SettingsRemoteDatasource menyimpan seluruh settings di memori
+          // selama 30 detik. Cache itu punya invalidateCache(), tapi
+          // sebelumnya nggak ada yang memanggilnya dari sini — jadi
+          // perubahan dari Admin baru kebaca kiosk setelah cache-nya
+          // kedaluwarsa sendiri.
+          //
+          // Efeknya bikin bingung waktu uji suara: admin ganti berkas audio
+          // lalu langsung menekan Uji, yang berbunyi masih berkas yang lama.
+          // Dikosongkan pun sama — yang kebaca masih URL lama.
+          Injection.instance.settingsDatasource.invalidateCache();
           _settingsUpdateController.add(null);
         }),
       );

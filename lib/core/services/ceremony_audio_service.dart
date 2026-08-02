@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import 'background_audio.dart';
+import 'realtime_service.dart';
 
 import '../utils/weekdays.dart';
 
@@ -32,6 +33,7 @@ class CeremonyAudioService {
   final AudioPlayer _player = AudioPlayer();
   Timer? _ticker;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _testSub;
+  StreamSubscription<void>? _settingsSub;
 
   /// Sudah diputar hari ini atau belum — "YYYY-M-D" terakhir.
   String? _playedDate;
@@ -52,6 +54,11 @@ class CeremonyAudioService {
     // panggilan antrian — lihat BackgroundAudio.
     BackgroundAudio.register(_player);
     _ticker = Timer.periodic(const Duration(seconds: 20), (_) => _tick());
+    // Jam/hari yang baru disimpan admin langsung kepakai, nggak nunggu TTL
+    // 5 menit di bawah kedaluwarsa.
+    _settingsSub = RealtimeService.instance.onSettingsUpdate.listen(
+      (_) => _settingsFetchedAt = null,
+    );
     _listenForTestRequests();
   }
 
@@ -60,32 +67,68 @@ class CeremonyAudioService {
     _ticker = null;
     await _testSub?.cancel();
     _testSub = null;
+    await _settingsSub?.cancel();
+    _settingsSub = null;
   }
 
   /// Putar sekarang juga — dipakai uji manual dari Admin.
   Future<void> play(CeremonyAudio audio) async {
+    // Selalu dihentikan dulu. Pemutar yang sebelumnya gagal (URL nggak bisa
+    // diputar) tertinggal dalam keadaan error, dan dari situ perintah play
+    // berikutnya nggak berbunyi apa-apa — termasuk yang seharusnya jatuh ke
+    // rekaman bawaan.
     try {
-      if (audio == CeremonyAudio.adzan) {
-        await _player.play(AssetSource('audio/adhan.mp3'), volume: 1.0);
-        return;
-      }
+      await _player.stop();
+    } catch (_) {}
 
-      // BPN boleh menyediakan rekaman sendiri lewat Pengaturan. Kalau
-      // kosong, pakai yang dibundel — itu yang bikin fitur ini tetap jalan
-      // walau internetnya mati.
-      final url = await Injection.instance.settingsDatasource.get(
-        'indonesia_raya_audio_url',
-      );
-      if (url.trim().isEmpty) {
-        await _player.play(
-          AssetSource('audio/indonesia_raya.mp3'),
-          volume: 1.0,
+    if (audio == CeremonyAudio.adzan) {
+      await _playAsset('audio/adhan.mp3');
+      return;
+    }
+
+    // Uji manual harus memutar apa yang BARU SAJA disimpan admin, bukan
+    // nilai yang masih nyangkut di cache 30 detik.
+    Injection.instance.settingsDatasource.invalidateCache();
+    final url = (await Injection.instance.settingsDatasource.get(
+      'indonesia_raya_audio_url',
+    )).trim();
+
+    // BPN boleh menyediakan rekaman sendiri lewat Pengaturan. Kalau kosong,
+    // pakai yang dibundel — itu yang bikin fitur ini tetap jalan walau
+    // internetnya mati.
+    if (url.isEmpty) {
+      await _playAsset('audio/indonesia_raya.mp3');
+      return;
+    }
+
+    try {
+      await _player.play(UrlSource(url), volume: 1.0);
+
+      // Kegagalan URL di Android nggak selalu dilempar sebagai exception —
+      // sering baru ketahuan diam-diam waktu pemutarnya nggak pernah mulai.
+      // Jadi dicek beneran jalan atau nggak, lalu jatuh ke rekaman bawaan.
+      // Lebih baik lagunya bunyi versi bawaan daripada senyap tanpa sebab.
+      await Future<void>.delayed(const Duration(seconds: 5));
+      final position = await _player.getCurrentPosition();
+      if (_player.state != PlayerState.playing &&
+          (position == null || position == Duration.zero)) {
+        debugPrint(
+          'CeremonyAudioService: URL nggak bisa diputar ($url), '
+          'jatuh ke rekaman bawaan.',
         );
-      } else {
-        await _player.play(UrlSource(url.trim()), volume: 1.0);
+        await _playAsset('audio/indonesia_raya.mp3');
       }
     } catch (e) {
-      debugPrint('CeremonyAudioService: gagal memutar ${_keyOf(audio)}: $e');
+      debugPrint('CeremonyAudioService: gagal memutar URL: $e');
+      await _playAsset('audio/indonesia_raya.mp3');
+    }
+  }
+
+  Future<void> _playAsset(String path) async {
+    try {
+      await _player.play(AssetSource(path), volume: 1.0);
+    } catch (e) {
+      debugPrint('CeremonyAudioService: gagal memutar $path: $e');
     }
   }
 
