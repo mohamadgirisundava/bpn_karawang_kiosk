@@ -3,11 +3,13 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import 'background_audio.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'background_audio.dart';
+
+/// Nama angka 0-9 untuk mengeja kode antrian.
 const List<String> _ones = [
-  '',
+  'nol',
   'satu',
   'dua',
   'tiga',
@@ -18,68 +20,12 @@ const List<String> _ones = [
   'delapan',
   'sembilan',
 ];
-const List<String> _teens = [
-  'sepuluh',
-  'sebelas',
-  'dua belas',
-  'tiga belas',
-  'empat belas',
-  'lima belas',
-  'enam belas',
-  'tujuh belas',
-  'delapan belas',
-  'sembilan belas',
-];
-const List<String> _tens = [
-  '',
-  '',
-  'dua puluh',
-  'tiga puluh',
-  'empat puluh',
-  'lima puluh',
-  'enam puluh',
-  'tujuh puluh',
-  'delapan puluh',
-  'sembilan puluh',
-];
 
 /// Angka ke kata Bahasa Indonesia ("1" -> "satu", "10" -> "sepuluh", "100"
 /// -> "seratus") — dibaca sebagai angka utuh, bukan dieja digit-per-digit
 /// (yang kedengeran berulang-ulang dan sebagian mesin TTS ngucapin "nol"
 /// yang jelek/bergetar — sudah dites di app Display).
-String _numberToWords(int n) {
-  if (n == 0) return 'nol';
-  if (n < 10) return _ones[n];
-  if (n < 20) return _teens[n - 10];
-  if (n < 100) {
-    final tens = n ~/ 10;
-    final ones = n % 10;
-    return ones == 0 ? _tens[tens] : '${_tens[tens]} ${_ones[ones]}';
-  }
-  if (n < 1000) {
-    final hundreds = n ~/ 100;
-    final rest = n % 100;
-    final hundredsWord = hundreds == 1 ? 'seratus' : '${_ones[hundreds]} ratus';
-    return rest == 0 ? hundredsWord : '$hundredsWord ${_numberToWords(rest)}';
-  }
-  final thousands = n ~/ 1000;
-  final rest = n % 1000;
-  final thousandsWord = thousands == 1
-      ? 'seribu'
-      : '${_numberToWords(thousands)} ribu';
-  return rest == 0 ? thousandsWord : '$thousandsWord ${_numberToWords(rest)}';
-}
-
 /// Pisah kode antrian jadi huruf loket + nomor ("A001" -> "A" + 1).
-({String prefix, int? number}) _parseQueueCode(String code) {
-  final match = RegExp(r'^([A-Za-z]*)0*(\d+)$').firstMatch(code);
-  if (match == null) return (prefix: '', number: null);
-  return (
-    prefix: match.group(1)!.toUpperCase(),
-    number: int.parse(match.group(2)!),
-  );
-}
-
 /// Baca field angka dari data Firestore secara toleran — beberapa dokumen
 /// bisa nyimpen angka sebagai string (input manual lewat Console), bukan
 /// number asli.
@@ -90,16 +36,41 @@ int _asInt(dynamic value, {int fallback = 0}) {
   return fallback;
 }
 
+/// Eja kode antrian per karakter: "A1001" jadi "A, satu, nol, nol, satu".
+///
+/// Dulu angkanya dibaca sebagai bilangan utuh, jadi "A1001" terbaca
+/// "A seribu satu". Dua masalahnya:
+///
+/// 1. Bilangan utuh susah dicocokkan dengan yang tercetak di kertas.
+///    Pengunjung memegang "A1001", bukan "seribu satu".
+/// 2. Kode layanan sekarang bisa mengandung angka (A1 = Plotting,
+///    A2 = Informasi). Pemisah lama cuma mengambil hurufnya, jadi "A1001"
+///    dipecah jadi "A" + 1001 — padahal yang benar "A1" + 001.
+///
+/// Mengeja per karakter menyelesaikan dua-duanya sekaligus, dan nggak perlu
+/// menebak di mana prefix berakhir.
+///
+/// Koma di antara karakter itu disengaja: TTS memberi jeda pendek di koma,
+/// jadi angkanya nggak terdengar berdempet.
+String _spellQueueCode(String code) {
+  final spoken = <String>[];
+  for (final char in code.trim().toUpperCase().split('')) {
+    final digit = int.tryParse(char);
+    if (digit != null) {
+      spoken.add(_ones[digit]);
+    } else if (char.trim().isNotEmpty) {
+      spoken.add(char);
+    }
+  }
+  return spoken.join(', ');
+}
+
 String _buildAnnouncementText(Map<String, dynamic> data) {
   final code = data['queue_code'] as String? ?? '';
-  final parsed = _parseQueueCode(code);
-  final spokenNumber = parsed.number == null
-      ? code
-      : _numberToWords(parsed.number!);
-  final spokenCode = parsed.prefix.isNotEmpty
-      ? '${parsed.prefix}, $spokenNumber'
-      : spokenNumber;
+  final spokenCode = _spellQueueCode(code);
   final deskNumber = _asInt(data['desk_number']);
+  // Nomor loket sengaja TIDAK dieja per angka — "loket sepuluh" lebih
+  // wajar didengar daripada "loket satu nol".
   final desk = deskNumber != 0 ? ', silakan menuju loket $deskNumber' : '';
   return 'Nomor antrian $spokenCode$desk';
 }
