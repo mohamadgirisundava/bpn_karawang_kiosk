@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 
 import 'background_audio.dart';
 
+import '../utils/weekdays.dart';
+
 import '../../injection.dart';
 
 /// Jenis suara yang bisa diputar di luar panggilan antrian.
@@ -87,18 +89,39 @@ class CeremonyAudioService {
     }
   }
 
+  /// Pengaturan di-cache sebentar supaya ticker 20 detik nggak menembak
+  /// Firestore tiap kali. Sehari penuh menunggu jam tayang bisa jadi ribuan
+  /// pembacaan, dan kuota gratis dipakai bareng seluruh sistem.
+  static const Duration _settingsTtl = Duration(minutes: 5);
+  DateTime? _settingsFetchedAt;
+  String _jamCache = '';
+  String _hariCache = '';
+
+  Future<void> _refreshSettings() async {
+    final now = DateTime.now();
+    final fetchedAt = _settingsFetchedAt;
+    if (fetchedAt != null && now.difference(fetchedAt) < _settingsTtl) return;
+
+    final settings = Injection.instance.settingsDatasource;
+    _jamCache = await settings.get('indonesia_raya_jam');
+    _hariCache = await settings.get('indonesia_raya_hari');
+    _settingsFetchedAt = now;
+  }
+
   Future<void> _tick() async {
     final now = DateTime.now();
 
-    // Hari kerja saja — sama seperti sebelumnya di Display.
-    if (now.weekday == DateTime.saturday || now.weekday == DateTime.sunday) {
-      return;
-    }
     if (_playedDate == _todayKey) return;
 
-    final raw = await Injection.instance.settingsDatasource.get(
-      'indonesia_raya_jam',
-    );
+    await _refreshSettings();
+
+    // Hari yang dipilih admin, boleh meloncat (mis. Senin dan Kamis saja).
+    // Kosong berarti hari kerja — perilaku lama, biar pemasangan yang belum
+    // pernah menyentuh pengaturan ini nggak berubah diam-diam.
+    final hari = parseWeekdays(_hariCache);
+    if (!(hari.isEmpty ? workdays : hari).contains(now.weekday)) return;
+
+    final raw = _jamCache;
     final parts = raw.trim().split(':');
     if (parts.length != 2) return;
     final h = int.tryParse(parts[0]);
@@ -150,6 +173,16 @@ class CeremonyAudioService {
             }
 
             final type = data['type'] as String? ?? '';
+
+            // "Hentikan Suara" di Admin. Lewat dokumen yang sama supaya
+            // nggak perlu jalur baru — perintahnya cuma beda isi `type`.
+            if (type == 'stop') {
+              debugPrint('CeremonyAudioService: perintah stop dari Admin.');
+              unawaited(_player.stop());
+              unawaited(BackgroundAudio.stopAll());
+              return;
+            }
+
             final audio = CeremonyAudio.values
                 .where((a) => _keyOf(a) == type)
                 .firstOrNull;

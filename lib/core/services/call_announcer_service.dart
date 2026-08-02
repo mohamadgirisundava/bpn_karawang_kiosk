@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -83,21 +82,20 @@ typedef _SpokenItem = ({
   DocumentReference<Map<String, dynamic>>? announcementRef,
 });
 
-/// Bunyiin chime + suara tiap ada panggilan nomor antrian baru (collection
+/// Bacakan tiap ada panggilan nomor antrian baru (collection
 /// `calls`, `is_active == true`) ATAU pengumuman suara baru dari admin
 /// (collection `voice_announcements`, `played == false`) — dua-duanya
 /// lewat antrian ucap yang sama biar nggak saling motong (TTS cuma bisa
 /// ngomong satu hal dalam satu waktu). Speaker fisik kiosk-lah yang
 /// beneran kepake buat pengumuman ini (bukan TV Display) — makanya
-/// logic-nya taruh di sini, pakai audio/TTS native Flutter (`audioplayers`
-/// + `flutter_tts`) bukan Web Speech API kayak versi Display, jadi nggak
+/// logic-nya taruh di sini, pakai TTS native Flutter (`flutter_tts`)
+/// bukan Web Speech API kayak versi Display, jadi nggak
 /// kena masalah autoplay policy / daftar voice kosong / force-dark yang
 /// bikin ribet di browser.
 class CallAnnouncerService {
   CallAnnouncerService._();
   static final CallAnnouncerService instance = CallAnnouncerService._();
 
-  final AudioPlayer _chimePlayer = AudioPlayer();
   final FlutterTts _tts = FlutterTts();
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _callSub;
@@ -130,13 +128,13 @@ class CallAnnouncerService {
       await _tts.awaitSpeakCompletion(true);
 
       // Dicek biar kelihatan di log kalau perangkatnya nggak punya suara
-      // Indonesia — penyebab paling sering TTS diam padahal chime bunyi.
-      // BlueStacks mis. sering nggak punya mesin TTS sama sekali.
+      // Indonesia — penyebab paling sering panggilan nggak kedengaran
+      // sama sekali. BlueStacks mis. sering nggak punya mesin TTS.
       final hasIndonesian = await _tts.isLanguageAvailable('id-ID');
       if (hasIndonesian != true) {
         debugPrint(
           'CallAnnouncerService: suara id-ID nggak tersedia di perangkat '
-          'ini. Panggilan tetap berbunyi chime, tapi nggak diucapkan. '
+          'ini, jadi panggilan nggak diucapkan sama sekali. '
           'Pasang mesin Text-to-Speech + bahasa Indonesia di perangkat.',
         );
       }
@@ -158,7 +156,6 @@ class CallAnnouncerService {
   Future<void> start() async {
     if (_callSub != null) return;
 
-    await _chimePlayer.setReleaseMode(ReleaseMode.stop);
     await _ensureTtsReady();
 
     _callSub = FirebaseFirestore.instance
@@ -268,8 +265,6 @@ class CallAnnouncerService {
     try {
       while (_queue.isNotEmpty) {
         final item = _queue.removeAt(0);
-        await _playChime();
-        await Future<void>.delayed(const Duration(milliseconds: 400));
         await _speak(item.text);
         if (item.announcementRef != null) {
           // Nandain udah dibacain SETELAH selesai ngomong, bukan sebelum —
@@ -292,33 +287,6 @@ class CallAnnouncerService {
       await BackgroundAudio.restore();
       _processing = false;
     }
-  }
-
-  Future<void> _playChime() {
-    final completer = Completer<void>();
-    late final StreamSubscription<void> sub;
-    sub = _chimePlayer.onPlayerComplete.listen((_) {
-      sub.cancel();
-      if (!completer.isCompleted) completer.complete();
-    });
-
-    _chimePlayer.play(AssetSource('audio/chime.wav'), volume: 0.8).catchError((
-      Object e,
-    ) {
-      debugPrint('CallAnnouncerService: gagal muter chime: $e');
-      sub.cancel();
-      if (!completer.isCompleted) completer.complete();
-    });
-
-    // Jaring pengaman kalau onPlayerComplete nggak pernah nyala.
-    unawaited(
-      Future<void>.delayed(const Duration(seconds: 2), () {
-        sub.cancel();
-        if (!completer.isCompleted) completer.complete();
-      }),
-    );
-
-    return completer.future;
   }
 
   Future<void> _speak(String text) async {

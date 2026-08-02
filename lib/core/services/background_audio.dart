@@ -23,9 +23,56 @@ class BackgroundAudio {
   static final List<AudioPlayer> _players = [];
   static int _activeCalls = 0;
 
+  /// Wajib dipanggil sekali sebelum ada yang diputar.
+  ///
+  /// Bawaan audioplayers di Android meminta audio focus `gain` tiap kali
+  /// sebuah player mulai berbunyi. Efeknya: pemutar lain di aplikasi yang
+  /// sama kehilangan focus dan langsung DIHENTIKAN sistem. Itulah kenapa
+  /// adzan mati begitu ada panggilan antrian — bukan karena kode ini
+  /// menghentikannya, tapi karena Android yang menghentikannya.
+  ///
+  /// Dengan `none`, tidak ada pemutar yang merebut focus dari yang lain,
+  /// jadi adzan terus berjalan dan pengumuman menumpang di atasnya. Volume
+  /// relatifnya baru diatur di [duck]/[restore] — dan pengaturan itu memang
+  /// baru berfungsi setelah baris ini ada.
+  static Future<void> configure() async {
+    try {
+      await AudioPlayer.global.setAudioContext(
+        AudioContext(
+          android: const AudioContextAndroid(
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.media,
+            audioFocus: AndroidAudioFocus.none,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: {AVAudioSessionOptions.mixWithOthers},
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('BackgroundAudio: gagal set audio context: $e');
+    }
+  }
+
   /// Didaftarkan oleh tiap service yang memutar suara panjang.
   static void register(AudioPlayer player) {
     if (!_players.contains(player)) _players.add(player);
+  }
+
+  /// Hentikan semua suara latar sekarang juga — dipakai tombol "Hentikan
+  /// Suara" di Admin. Adzan berdurasi menit; tanpa ini satu-satunya cara
+  /// menghentikannya adalah mendatangi kiosk secara fisik.
+  static Future<void> stopAll() async {
+    _activeCalls = 0;
+    for (final player in _players) {
+      try {
+        await player.stop();
+        await player.setVolume(1.0);
+      } catch (e) {
+        debugPrint('BackgroundAudio: gagal stop: $e');
+      }
+    }
   }
 
   /// Dipanggil sebelum panggilan/pengumuman mulai berbunyi.

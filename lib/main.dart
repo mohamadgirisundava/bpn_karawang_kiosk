@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'core/constants/app_colors.dart';
 import 'core/services/adhan_scheduler_service.dart';
+import 'core/services/background_audio.dart';
 import 'core/services/call_announcer_service.dart';
 import 'core/services/kiosk_foreground_task.dart';
 import 'core/services/ceremony_audio_service.dart';
@@ -33,6 +34,11 @@ void main() async {
 
   // Init dependency injection
   Injection.instance.init();
+
+  // Harus sebelum service audio mana pun start — ini yang bikin beberapa
+  // suara bisa berbunyi bersamaan tanpa saling mematikan. Lihat
+  // BackgroundAudio.configure().
+  await BackgroundAudio.configure();
 
   // Speaker fisik kiosk-lah yang beneran kepake buat pengumuman "nomor
   // antrian..." (bukan TV Display) — jalanin di sini, global, nggak

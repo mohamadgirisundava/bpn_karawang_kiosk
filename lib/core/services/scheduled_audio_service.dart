@@ -17,8 +17,11 @@ class _ScheduleEntry {
   final String id;
   final String label;
   final String time; // "HH:mm"
-  final String repeatType; // "daily" | "once"
+  final String repeatType; // "daily" | "weekly" | "once"
   final String? date; // "YYYY-MM-DD", cuma dipakai kalau repeatType == once
+  /// Hari terpilih (1 = Senin ... 7 = Minggu), cuma dipakai kalau
+  /// repeatType == weekly. Boleh meloncat, mis. {1, 4}.
+  final Set<int> days;
   final String audioUrl;
 
   _ScheduleEntry({
@@ -27,6 +30,7 @@ class _ScheduleEntry {
     required this.time,
     required this.repeatType,
     required this.date,
+    required this.days,
     required this.audioUrl,
   });
 
@@ -38,6 +42,9 @@ class _ScheduleEntry {
       time: data['time'] as String? ?? '',
       repeatType: data['repeatType'] as String? ?? 'daily',
       date: data['date'] as String?,
+      days: (data['days'] as List<dynamic>? ?? [])
+          .map((e) => (e as num).toInt())
+          .toSet(),
       audioUrl: data['audioUrl'] as String? ?? '',
     );
   }
@@ -99,6 +106,12 @@ class ScheduledAudioService {
     for (final entry in _entries) {
       if (entry.time != nowHHmm) continue;
       if (entry.repeatType == 'once' && entry.date != dateKey) continue;
+      // Daftar hari kosong sengaja diperlakukan sebagai "nggak pernah",
+      // bukan "tiap hari": jadwal weekly tanpa hari terpilih itu belum
+      // selesai diisi, dan lebih aman diam daripada bunyi tiap hari.
+      if (entry.repeatType == 'weekly' && !entry.days.contains(now.weekday)) {
+        continue;
+      }
 
       final playedKey = '$dateKey:${entry.id}';
       if (_playedToday.contains(playedKey)) continue;
