@@ -1,4 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart' show sha1;
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'background_audio.dart';
 import 'realtime_service.dart';
 
+import '../utils/drive_link.dart';
 import '../utils/weekdays.dart';
 
 import '../../injection.dart';
@@ -101,26 +108,67 @@ class CeremonyAudioService {
       return;
     }
 
-    try {
-      await _player.play(UrlSource(url), volume: 1.0);
-
-      // Kegagalan URL di Android nggak selalu dilempar sebagai exception —
-      // sering baru ketahuan diam-diam waktu pemutarnya nggak pernah mulai.
-      // Jadi dicek beneran jalan atau nggak, lalu jatuh ke rekaman bawaan.
-      // Lebih baik lagunya bunyi versi bawaan daripada senyap tanpa sebab.
-      await Future<void>.delayed(const Duration(seconds: 5));
-      final position = await _player.getCurrentPosition();
-      if (_player.state != PlayerState.playing &&
-          (position == null || position == Duration.zero)) {
-        debugPrint(
-          'CeremonyAudioService: URL nggak bisa diputar ($url), '
-          'jatuh ke rekaman bawaan.',
-        );
-        await _playAsset('audio/indonesia_raya.mp3');
-      }
-    } catch (e) {
-      debugPrint('CeremonyAudioService: gagal memutar URL: $e');
+    // Diunduh dulu, baru diputar dari berkas lokal — BUKAN di-stream lewat
+    // UrlSource. Tiga alasan, semuanya kejadian nyata:
+    //
+    // 1. Drive membalas 303 redirect. `package:http` mengikutinya sendiri;
+    //    pemutar Android belum tentu.
+    // 2. Kalau sharing-nya belum publik, Drive membalas halaman HTML dengan
+    //    status 200. Di sini bisa dideteksi dan ditolak; kalau di-stream,
+    //    pemutar cuma diam tanpa pesan apa pun.
+    // 3. Setelah tersimpan, pemutarannya nggak lagi bergantung koneksi
+    //    persis di detik lagunya harus bunyi.
+    //
+    // Pola yang sama sudah dipakai ScheduledAudioService.
+    final localPath = await _cachedFile(url);
+    if (localPath == null) {
+      debugPrint('CeremonyAudioService: pakai rekaman bawaan.');
       await _playAsset('audio/indonesia_raya.mp3');
+      return;
+    }
+
+    try {
+      await _player.play(DeviceFileSource(localPath), volume: 1.0);
+    } catch (e) {
+      debugPrint('CeremonyAudioService: gagal memutar berkas unduhan: $e');
+      await _playAsset('audio/indonesia_raya.mp3');
+    }
+  }
+
+  /// Unduh sekali per URL lalu simpan lokal. Null berarti gagal — pemanggil
+  /// yang memutuskan jatuh ke rekaman bawaan.
+  Future<String?> _cachedFile(String rawUrl) async {
+    final url = upgradeDriveLink(rawUrl);
+    try {
+      final dir = await getApplicationSupportDirectory();
+      final hash = sha1.convert(utf8.encode(url)).toString();
+      final file = File('${dir.path}/ceremony_$hash.mp3');
+      if (await file.exists() && await file.length() > 0) return file.path;
+
+      final response = await http
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) {
+        debugPrint('CeremonyAudioService: unduh gagal ${response.statusCode}.');
+        return null;
+      }
+      // Drive membalas halaman HTML dengan status 200 kalau berkasnya belum
+      // di-share publik. Tanpa pemeriksaan ini, HTML-nya tersimpan sebagai
+      // .mp3 dan gagal diputar selamanya karena cache-nya dianggap valid.
+      if (looksLikeHtml(response.bodyBytes)) {
+        debugPrint(
+          'CeremonyAudioService: yang diunduh halaman HTML, bukan audio. '
+          'Berkas Drive-nya kemungkinan belum di-share "siapa saja yang '
+          'punya link".',
+        );
+        return null;
+      }
+
+      await file.writeAsBytes(response.bodyBytes);
+      return file.path;
+    } catch (e) {
+      debugPrint('CeremonyAudioService: gagal menyiapkan berkas audio: $e');
+      return null;
     }
   }
 
