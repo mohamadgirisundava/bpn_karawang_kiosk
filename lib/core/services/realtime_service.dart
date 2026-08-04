@@ -4,7 +4,36 @@ import 'package:flutter/foundation.dart';
 
 import '../../injection.dart';
 
+/// Kunci tanggal hari ini, "YYYY-MM-DD" — sama persis dengan `dateKey` di
+/// dokumen antrian.
+String _todayKey() {
+  final now = DateTime.now();
+  return '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+      '${now.day.toString().padLeft(2, '0')}';
+}
+
 /// Service untuk realtime subscription ke semua collection Firestore.
+///
+/// ## Kenapa `queues` dan `calls` WAJIB difilter
+///
+/// Firestore menagih PER DOKUMEN DIBACA, dan snapshot pertama sebuah
+/// listener mengirim seluruh isi hasil query sebagai "added". Jadi biaya
+/// satu listener bukan sekali seumur hidup — dia terbayar lagi setiap kali
+/// koneksinya putus lalu tersambung ulang.
+///
+/// Di lokasi, jaringannya putus-nyambung (2026-08-04: `UNAVAILABLE: Unable
+/// to resolve host`). Tiap penyambungan ulang membaca ulang semuanya, dikali
+/// jumlah aplikasi dan perangkat. Itu yang menghabiskan 44.000 baca dan
+/// mematikan pelayanan di tengah jam kerja, bukan data yang menumpuk —
+/// isinya waktu itu cuma 1.267 dokumen.
+///
+/// Yang paling mahal justru `calls`: 393 dokumen dan nggak pernah dihapus,
+/// padahal yang dipakai cuma yang `is_active`. Sekarang `queues` dibatasi ke
+/// hari ini dan `calls` ke yang aktif — dari ~530 dokumen per penyambungan
+/// jadi puluhan saja.
+///
+/// **Jangan menghapus filternya.** Kalau butuh data lama, ambil sekali lewat
+/// `.get()` — jangan dijadikan listener.
 class RealtimeService {
   RealtimeService._();
   static final RealtimeService instance = RealtimeService._();
@@ -32,6 +61,13 @@ class RealtimeService {
   void notifyQueueUpdate() => _queueUpdateController.add(null);
 
   bool _subscribed = false;
+
+  /// Tanggal yang sedang dilanggan. Listener `queues` dibuat sekali dengan
+  /// tanggal tetap, jadi kiosk yang menyala melewati tengah malam bakal
+  /// terus mendengarkan tanggal kemarin dan antrian hari baru nggak pernah
+  /// muncul. [_dateWatcher] yang menanganinya.
+  String _subscribedDate = _todayKey();
+  Timer? _dateWatcher;
   final List<StreamSubscription<QuerySnapshot>> _subscriptions = [];
 
   /// Subscribe ke semua collection
@@ -40,12 +76,16 @@ class RealtimeService {
 
     try {
       _subscriptions.add(
-        _db.collection('queues').snapshots().listen((snapshot) {
-          debugPrint(
-            'Realtime queues: ${snapshot.docChanges.length} change(s)',
-          );
-          _queueUpdateController.add(null);
-        }),
+        _db
+            .collection('queues')
+            .where('dateKey', isEqualTo: _subscribedDate)
+            .snapshots()
+            .listen((snapshot) {
+              debugPrint(
+                'Realtime queues: ${snapshot.docChanges.length} change(s)',
+              );
+              _queueUpdateController.add(null);
+            }),
       );
 
       _subscriptions.add(
@@ -58,10 +98,16 @@ class RealtimeService {
       );
 
       _subscriptions.add(
-        _db.collection('calls').snapshots().listen((snapshot) {
-          debugPrint('Realtime calls: ${snapshot.docChanges.length} change(s)');
-          _callUpdateController.add(null);
-        }),
+        _db
+            .collection('calls')
+            .where('is_active', isEqualTo: true)
+            .snapshots()
+            .listen((snapshot) {
+              debugPrint(
+                'Realtime calls: ${snapshot.docChanges.length} change(s)',
+              );
+              _callUpdateController.add(null);
+            }),
       );
 
       _subscriptions.add(
@@ -83,6 +129,17 @@ class RealtimeService {
         }),
       );
 
+      // Tengah malam listener `queues` harus dibuat ulang dengan tanggal
+      // baru. Diperiksa tiap 10 menit — murah, dan cuma menembak Firestore
+      // kalau tanggalnya benar-benar berganti.
+      _dateWatcher ??= Timer.periodic(const Duration(minutes: 10), (_) {
+        final today = _todayKey();
+        if (today == _subscribedDate) return;
+        debugPrint('Realtime: ganti hari $_subscribedDate -> $today');
+        _subscribedDate = today;
+        unsubscribe().then((_) => subscribe());
+      });
+
       _subscribed = true;
       debugPrint('Realtime: subscribed to all collections');
     } catch (e) {
@@ -100,6 +157,8 @@ class RealtimeService {
   }
 
   void dispose() {
+    _dateWatcher?.cancel();
+    _dateWatcher = null;
     _queueUpdateController.close();
     _counterUpdateController.close();
     _callUpdateController.close();
