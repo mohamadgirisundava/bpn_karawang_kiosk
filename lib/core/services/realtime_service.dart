@@ -60,6 +60,41 @@ class RealtimeService {
   /// Firestore yang kadang ada jeda dikit.
   void notifyQueueUpdate() => _queueUpdateController.add(null);
 
+  /// Perubahan data digabung dulu sebelum diteruskan ke cubit.
+  ///
+  /// Tiap event `onQueueUpdate`/`onCallUpdate` bikin cubit MENJALANKAN QUERY
+  /// BARU (lihat CounterCubit.refreshQueueInfo) — satu query per layanan,
+  /// jadi sekali refresh itu belasan query, bukan satu.
+  ///
+  /// Masalahnya satu aksi petugas nggak menghasilkan satu perubahan.
+  /// "Panggil Berikutnya" saja mengubah dokumen antrian, membuat dokumen
+  /// panggilan baru, dan menonaktifkan panggilan sebelumnya — tiga event
+  /// dalam hitungan milidetik. Tanpa penggabungan ini, masing-masing memicu
+  /// refresh penuh sendiri-sendiri.
+  ///
+  /// Inilah penyumbang terbesar habisnya 44.000 baca pada 2026-08-04 —
+  /// bukan ukuran datanya, yang cuma 1.267 dokumen. 800ms nggak terasa di
+  /// layar antrian, tapi memotong refresh berlipat jadi satu.
+  static const Duration _debounce = Duration(milliseconds: 800);
+  Timer? _queueDebounceTimer;
+  Timer? _callDebounceTimer;
+
+  void _emitQueueUpdate() {
+    _queueDebounceTimer?.cancel();
+    _queueDebounceTimer = Timer(
+      _debounce,
+      () => _queueUpdateController.add(null),
+    );
+  }
+
+  void _emitCallUpdate() {
+    _callDebounceTimer?.cancel();
+    _callDebounceTimer = Timer(
+      _debounce,
+      () => _callUpdateController.add(null),
+    );
+  }
+
   bool _subscribed = false;
 
   /// Tanggal yang sedang dilanggan. Listener `queues` dibuat sekali dengan
@@ -84,7 +119,7 @@ class RealtimeService {
               debugPrint(
                 'Realtime queues: ${snapshot.docChanges.length} change(s)',
               );
-              _queueUpdateController.add(null);
+              _emitQueueUpdate();
             }),
       );
 
@@ -106,7 +141,7 @@ class RealtimeService {
               debugPrint(
                 'Realtime calls: ${snapshot.docChanges.length} change(s)',
               );
-              _callUpdateController.add(null);
+              _emitCallUpdate();
             }),
       );
 
@@ -157,6 +192,8 @@ class RealtimeService {
   }
 
   void dispose() {
+    _queueDebounceTimer?.cancel();
+    _callDebounceTimer?.cancel();
     _dateWatcher?.cancel();
     _dateWatcher = null;
     _queueUpdateController.close();
