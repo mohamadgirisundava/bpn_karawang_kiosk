@@ -66,7 +66,7 @@ class Injection {
     _getActiveCounters = GetActiveCounters(_counterRepository);
     _createQueue = CreateQueue(_queueRepository);
     _createPrintJob = CreatePrintJob(_queueRepository);
-    _getQueueInfo = GetQueueInfo(_queueRepository);
+    _getQueueInfo = const GetQueueInfo();
     _getEstimatePerPerson = GetEstimatePerPerson(_settingsRepository);
     _watchPrintJobStatus = WatchPrintJobStatus(_queueRepository);
 

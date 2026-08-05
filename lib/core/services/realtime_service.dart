@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../data/models/queue_model.dart';
 import '../../injection.dart';
+import 'service_window.dart';
 
 /// Kunci tanggal hari ini, "YYYY-MM-DD" — sama persis dengan `dateKey` di
 /// dokumen antrian.
@@ -14,86 +16,65 @@ String _todayKey() {
 
 /// Service untuk realtime subscription ke semua collection Firestore.
 ///
-/// ## Kenapa `queues` dan `calls` WAJIB difilter
+/// ## Aturan pertama: listener adalah SUMBER DATA, bukan bel pemberitahuan
 ///
-/// Firestore menagih PER DOKUMEN DIBACA, dan snapshot pertama sebuah
-/// listener mengirim seluruh isi hasil query sebagai "added". Jadi biaya
-/// satu listener bukan sekali seumur hidup — dia terbayar lagi setiap kali
-/// koneksinya putus lalu tersambung ulang.
+/// Firestore menagih PER DOKUMEN DIBACA. Snapshot `queues` di bawah sudah
+/// mengirimkan setiap tiket hari ini ke aplikasi ini, dan itu SUDAH DIBAYAR.
+/// Kalau cubit-nya cuma memakai snapshot itu sebagai penanda "ada yang
+/// berubah" lalu menjalankan query sendiri, dokumen yang sama dibayar dua
+/// kali — dikali jumlah layanan, dikali jumlah perangkat.
 ///
-/// Di lokasi, jaringannya putus-nyambung (2026-08-04: `UNAVAILABLE: Unable
-/// to resolve host`). Tiap penyambungan ulang membaca ulang semuanya, dikali
-/// jumlah aplikasi dan perangkat. Itu yang menghabiskan 44.000 baca dan
-/// mematikan pelayanan di tengah jam kerja, bukan data yang menumpuk —
-/// isinya waktu itu cuma 1.267 dokumen.
+/// Itu yang terjadi sampai 2026-08-05: 185 tiket menghabiskan 69.672 baca
+/// (~350 per tiket) dan kuota 50.000 jebol di tengah jam pelayanan.
+/// Sekarang [todayQueues] menyimpan hasil snapshot di memori dan
+/// [onQueuesData] menyiarkan datanya — nol query tambahan.
 ///
-/// Yang paling mahal justru `calls`: 393 dokumen dan nggak pernah dihapus,
-/// padahal yang dipakai cuma yang `is_active`. Sekarang `queues` dibatasi ke
-/// hari ini dan `calls` ke yang aktif — dari ~530 dokumen per penyambungan
-/// jadi puluhan saja.
+/// **Jangan mengembalikan pola query-ulang-saat-ada-event.**
 ///
-/// **Jangan menghapus filternya.** Kalau butuh data lama, ambil sekali lewat
-/// `.get()` — jangan dijadikan listener.
+/// ## Filternya juga wajib dipertahankan
+///
+/// Snapshot pertama sebuah listener mengirim seluruh hasil query sebagai
+/// "added", jadi biayanya terbayar lagi tiap koneksi putus-nyambung — dan di
+/// lokasi jaringannya memang begitu (2026-08-04: `UNAVAILABLE: Unable to
+/// resolve host`). Tanpa `where('dateKey')`, sekali menyambung ulang
+/// menyeret seluruh isi collection. Kalau butuh data lama, ambil sekali
+/// lewat `.get()` — jangan dijadikan listener.
 class RealtimeService {
   RealtimeService._();
   static final RealtimeService instance = RealtimeService._();
 
   FirebaseFirestore get _db => FirebaseFirestore.instance;
 
-  final StreamController<void> _queueUpdateController =
-      StreamController<void>.broadcast();
+  /// Tiket hari ini, apa adanya dari snapshot terakhir. Ini SATU-SATUNYA
+  /// sumber data antrian di app ini — jangan query ulang untuk sesuatu yang
+  /// sudah ada di sini.
+  List<QueueModel> _todayQueues = const [];
+  List<QueueModel> get todayQueues => _todayQueues;
+
+  final StreamController<List<QueueModel>> _queuesDataController =
+      StreamController<List<QueueModel>>.broadcast();
   final StreamController<void> _counterUpdateController =
-      StreamController<void>.broadcast();
-  final StreamController<void> _callUpdateController =
       StreamController<void>.broadcast();
   final StreamController<void> _settingsUpdateController =
       StreamController<void>.broadcast();
 
-  Stream<void> get onQueueUpdate => _queueUpdateController.stream;
+  /// Data tiket hari ini tiap kali berubah. Cubit yang baru dibuat harus
+  /// menyemai dirinya dari [todayQueues] dulu — stream broadcast nggak
+  /// mengulang emit terakhir buat pendengar yang telat.
+  Stream<List<QueueModel>> get onQueuesData => _queuesDataController.stream;
   Stream<void> get onCounterUpdate => _counterUpdateController.stream;
-  Stream<void> get onCallUpdate => _callUpdateController.stream;
   Stream<void> get onSettingsUpdate => _settingsUpdateController.stream;
 
-  /// Paksa semua cubit yang lagi dengerin `onQueueUpdate` refresh sekarang
-  /// juga — dipakai setelah aksi yang KITA SENDIRI tau pasti ngubah data
-  /// `queues` (mis. reset antrian), daripada nunggu propagasi listener
-  /// Firestore yang kadang ada jeda dikit.
-  void notifyQueueUpdate() => _queueUpdateController.add(null);
+  /// Pancarkan ulang isi cache sekarang juga — dipakai setelah aksi yang
+  /// KITA SENDIRI tau pasti ngubah `queues` (mis. reset antrian), daripada
+  /// nunggu propagasi listener Firestore yang kadang ada jeda dikit.
+  void notifyQueueUpdate() => _queuesDataController.add(_todayQueues);
 
-  /// Perubahan data digabung dulu sebelum diteruskan ke cubit.
-  ///
-  /// Tiap event `onQueueUpdate`/`onCallUpdate` bikin cubit MENJALANKAN QUERY
-  /// BARU (lihat CounterCubit.refreshQueueInfo) — satu query per layanan,
-  /// jadi sekali refresh itu belasan query, bukan satu.
-  ///
-  /// Masalahnya satu aksi petugas nggak menghasilkan satu perubahan.
-  /// "Panggil Berikutnya" saja mengubah dokumen antrian, membuat dokumen
-  /// panggilan baru, dan menonaktifkan panggilan sebelumnya — tiga event
-  /// dalam hitungan milidetik. Tanpa penggabungan ini, masing-masing memicu
-  /// refresh penuh sendiri-sendiri.
-  ///
-  /// Inilah penyumbang terbesar habisnya 44.000 baca pada 2026-08-04 —
-  /// bukan ukuran datanya, yang cuma 1.267 dokumen. 800ms nggak terasa di
-  /// layar antrian, tapi memotong refresh berlipat jadi satu.
-  static const Duration _debounce = Duration(milliseconds: 800);
-  Timer? _queueDebounceTimer;
-  Timer? _callDebounceTimer;
-
-  void _emitQueueUpdate() {
-    _queueDebounceTimer?.cancel();
-    _queueDebounceTimer = Timer(
-      _debounce,
-      () => _queueUpdateController.add(null),
-    );
-  }
-
-  void _emitCallUpdate() {
-    _callDebounceTimer?.cancel();
-    _callDebounceTimer = Timer(
-      _debounce,
-      () => _callUpdateController.add(null),
-    );
-  }
+  /// Dulu di sini ada debounce 800ms. Itu tambalan supaya satu aksi yang
+  /// menghasilkan beberapa perubahan beruntun nggak memicu beberapa putaran
+  /// query penuh. Sekarang event-nya nggak memicu query sama sekali — cuma
+  /// menyalin daftar yang sudah ada di memori — jadi penundaannya nggak ada
+  /// gunanya lagi.
 
   bool _subscribed = false;
 
@@ -103,10 +84,69 @@ class RealtimeService {
   /// muncul. [_dateWatcher] yang menanganinya.
   String _subscribedDate = _todayKey();
   Timer? _dateWatcher;
+  Timer? _windowWatcher;
   final List<StreamSubscription<QuerySnapshot>> _subscriptions = [];
 
-  /// Subscribe ke semua collection
+  /// Listener `settings` sengaja DIPISAH dan selalu hidup.
+  ///
+  /// Dia yang jadi sumber jam buka/tutup, jadi kalau ikut dilepas waktu
+  /// kantor tutup, aplikasi nggak akan pernah tau kapan harus bangun lagi.
+  /// Isinya cuma 20 dokumen dan nyaris nggak pernah berubah, jadi biayanya
+  /// dapat diabaikan dibanding `queues` yang berubah ratusan kali sehari.
+  StreamSubscription<QuerySnapshot>? _settingsSub;
+  bool _windowOpen = true;
+
+  /// Buka/tutup menurut setelan terakhir yang terbaca.
+  bool get isServiceWindowOpen => _windowOpen;
+
+  Map<String, String> get _settingsSnapshot =>
+      Injection.instance.settingsDatasource.cachedValues;
+
+  /// Terapkan gerbang jam layanan: sambungkan yang berat kalau buka, lepas
+  /// kalau tutup. Aman dipanggil berulang — keduanya no-op kalau statusnya
+  /// nggak berubah.
+  Future<void> _applyServiceWindow() async {
+    final open = ServiceWindow.isOpen(_settingsSnapshot);
+    _windowOpen = open;
+
+    if (open && !_subscribed) {
+      await _subscribeHeavy();
+    } else if (!open && _subscribed) {
+      debugPrint('Realtime: di luar jam layanan — lepas listener antrian');
+      await _unsubscribeHeavy();
+    }
+  }
+
+  /// Sambungkan listener `settings` (selalu) lalu jalankan gerbang jamnya.
   Future<void> subscribe() async {
+    _settingsSub ??= _db.collection('settings').snapshots().listen((
+      snapshot,
+    ) {
+      debugPrint('Realtime settings: ${snapshot.docChanges.length} change(s)');
+      // SettingsRemoteDatasource menyimpan seluruh settings di memori
+      // selama 30 detik. Cache itu punya invalidateCache(), tapi sebelumnya
+      // nggak ada yang memanggilnya dari sini — jadi perubahan dari Admin
+      // baru kebaca kiosk setelah cache-nya kedaluwarsa sendiri.
+      //
+      // Efeknya bikin bingung waktu uji suara: admin ganti berkas audio lalu
+      // langsung menekan Uji, yang berbunyi masih berkas yang lama.
+      Injection.instance.settingsDatasource.primeCache(snapshot);
+      _settingsUpdateController.add(null);
+      // Jam buka/tutup baru saja mungkin berubah — terapkan sekarang juga.
+      unawaited(_applyServiceWindow());
+    }, onError: (Object e) => debugPrint('Realtime settings error: $e'));
+
+    // Diperiksa tiap menit; murah, dan cuma menyentuh Firestore saat
+    // statusnya benar-benar berpindah.
+    _windowWatcher ??= Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => unawaited(_applyServiceWindow()),
+    );
+
+    await _applyServiceWindow();
+  }
+
+  Future<void> _subscribeHeavy() async {
     if (_subscribed) return;
 
     try {
@@ -117,9 +157,13 @@ class RealtimeService {
             .snapshots()
             .listen((snapshot) {
               debugPrint(
-                'Realtime queues: ${snapshot.docChanges.length} change(s)',
+                'Realtime queues: ${snapshot.docChanges.length} change(s), '
+                '${snapshot.docs.length} dokumen',
               );
-              _emitQueueUpdate();
+              _todayQueues = snapshot.docs
+                  .map(QueueModel.fromDoc)
+                  .toList(growable: false);
+              _queuesDataController.add(_todayQueues);
             }),
       );
 
@@ -132,37 +176,11 @@ class RealtimeService {
         }),
       );
 
-      _subscriptions.add(
-        _db
-            .collection('calls')
-            .where('is_active', isEqualTo: true)
-            .snapshots()
-            .listen((snapshot) {
-              debugPrint(
-                'Realtime calls: ${snapshot.docChanges.length} change(s)',
-              );
-              _emitCallUpdate();
-            }),
-      );
-
-      _subscriptions.add(
-        _db.collection('settings').snapshots().listen((snapshot) {
-          debugPrint(
-            'Realtime settings: ${snapshot.docChanges.length} change(s)',
-          );
-          // SettingsRemoteDatasource menyimpan seluruh settings di memori
-          // selama 30 detik. Cache itu punya invalidateCache(), tapi
-          // sebelumnya nggak ada yang memanggilnya dari sini — jadi
-          // perubahan dari Admin baru kebaca kiosk setelah cache-nya
-          // kedaluwarsa sendiri.
-          //
-          // Efeknya bikin bingung waktu uji suara: admin ganti berkas audio
-          // lalu langsung menekan Uji, yang berbunyi masih berkas yang lama.
-          // Dikosongkan pun sama — yang kebaca masih URL lama.
-          Injection.instance.settingsDatasource.invalidateCache();
-          _settingsUpdateController.add(null);
-        }),
-      );
+      // Listener `calls` sengaja NGGAK ADA di sini. `onCallUpdate` dulu nol
+      // pemakai — pengumuman suara panggilan punya listener sendiri yang
+      // sudah difilter `is_active` + `limit(1)` di CallAnnouncerService, dan
+      // itu yang benar-benar dipakai. Listener di sini cuma membayar ulang
+      // dokumen yang sama tanpa ada yang membacanya.
 
       // Tengah malam listener `queues` harus dibuat ulang dengan tanggal
       // baru. Diperiksa tiap 10 menit — murah, dan cuma menembak Firestore
@@ -172,7 +190,7 @@ class RealtimeService {
         if (today == _subscribedDate) return;
         debugPrint('Realtime: ganti hari $_subscribedDate -> $today');
         _subscribedDate = today;
-        unsubscribe().then((_) => subscribe());
+        _unsubscribeHeavy().then((_) => _subscribeHeavy());
       });
 
       _subscribed = true;
@@ -182,23 +200,38 @@ class RealtimeService {
     }
   }
 
-  /// Unsubscribe semua
-  Future<void> unsubscribe() async {
+  Future<void> _unsubscribeHeavy() async {
     for (final sub in _subscriptions) {
       await sub.cancel();
     }
     _subscriptions.clear();
     _subscribed = false;
+
+    // Tengah malam (dan tiap kali kantor tutup) listener dibuat ulang. Tanpa
+    // dikosongkan di sini, daftar lama tetap nangkring di memori sampai
+    // snapshot pertama yang baru datang.
+    _todayQueues = const [];
+    _queuesDataController.add(_todayQueues);
+  }
+
+  /// Lepas SEMUA listener, termasuk `settings`. Dipakai saat aplikasi ditutup
+  /// — bukan saat kantor tutup (itu `_unsubscribeHeavy`, yang menyisakan
+  /// `settings` supaya masih tau kapan harus bangun).
+  Future<void> unsubscribe() async {
+    await _unsubscribeHeavy();
+    await _settingsSub?.cancel();
+    _settingsSub = null;
+    _windowWatcher?.cancel();
+    _windowWatcher = null;
   }
 
   void dispose() {
-    _queueDebounceTimer?.cancel();
-    _callDebounceTimer?.cancel();
     _dateWatcher?.cancel();
     _dateWatcher = null;
-    _queueUpdateController.close();
+    _windowWatcher?.cancel();
+    _windowWatcher = null;
+    _queuesDataController.close();
     _counterUpdateController.close();
-    _callUpdateController.close();
     _settingsUpdateController.close();
   }
 }

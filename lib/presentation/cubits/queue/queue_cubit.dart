@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import '../../../domain/entities/queue_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../core/utils/error_message.dart';
@@ -41,7 +41,7 @@ class QueueInfoCubit extends Cubit<QueueInfoState> {
         ),
       );
 
-      await _refreshQueueInfo();
+      _refreshQueueInfo();
       _setupRealtime();
     } catch (e) {
       emit(
@@ -53,35 +53,26 @@ class QueueInfoCubit extends Cubit<QueueInfoState> {
     }
   }
 
-  // Sama alasannya kayak CounterCubit: query pertama abis cold-start
-  // kadang gagal/timeout, retry sendiri beberapa kali biar nggak nyangkut
-  // nampilin data lama/kosong tanpa ada indikasi apa-apa ke user.
-  Future<void> _refreshQueueInfo() async {
-    if (state.counters.isEmpty) return;
-    final ids = state.counters.map((c) => c.id).toList();
+  // Dulu di sini ada retry 3x, karena query pertama sehabis cold-start
+  // sering gagal/timeout. Sekarang nggak ada query — cuma perhitungan dari
+  // snapshot yang sudah di memori, jadi nggak ada yang bisa gagal.
+  void _refreshQueueInfo() => _applyQueues(RealtimeService.instance.todayQueues);
 
-    const maxAttempts = 3;
-    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        final info = await _getQueueInfo.getAll(ids);
-        if (isClosed) return;
-        emit(state.copyWith(queueInfo: info));
-        return;
-      } catch (e) {
-        debugPrint(
-          'QueueInfoCubit: gagal ambil info antrian (percobaan $attempt): $e',
-        );
-        if (attempt == maxAttempts) return;
-        await Future<void>.delayed(const Duration(seconds: 2));
-      }
-    }
+  void _applyQueues(List<QueueEntity> todayQueues) {
+    if (isClosed || state.counters.isEmpty) return;
+    emit(
+      state.copyWith(
+        queueInfo: _getQueueInfo.getAll(
+          todayQueues,
+          state.counters.map((c) => c.id).toList(),
+        ),
+      ),
+    );
   }
 
   void _setupRealtime() {
     _realtimeSub?.cancel();
-    _realtimeSub = RealtimeService.instance.onQueueUpdate.listen((_) {
-      _refreshQueueInfo();
-    });
+    _realtimeSub = RealtimeService.instance.onQueuesData.listen(_applyQueues);
     // Listen settings update untuk refresh estimate
     RealtimeService.instance.onSettingsUpdate.listen((_) {
       _refreshEstimate();

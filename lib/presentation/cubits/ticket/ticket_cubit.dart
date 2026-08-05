@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../../core/services/print_relay_status_service.dart';
+import '../../../core/services/realtime_service.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/error_message.dart';
@@ -42,9 +43,15 @@ class TicketCubit extends Cubit<TicketState> {
        super(const TicketState());
 
   /// Load info antrian untuk counter ini.
+  ///
+  /// Angka antriannya diturunkan dari snapshot realtime yang sudah ada di
+  /// memori — nggak ada query ke Firestore di sini. Yang masih ditunggu
+  /// cuma setelan estimasi per orang.
   Future<void> loadQueueInfo(String counterId) async {
     try {
-      final info = await _getQueueInfo(counterId);
+      final info = _getQueueInfo.getAll(RealtimeService.instance.todayQueues, [
+        counterId,
+      ])[counterId]!;
       final estimate = await _getEstimatePerPerson();
       emit(state.copyWith(queueInfo: info, estimatePerPerson: estimate));
     } catch (_) {

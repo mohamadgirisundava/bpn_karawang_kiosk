@@ -120,34 +120,4 @@ class QueueRemoteDatasource {
         .map((doc) => doc.data()?['status'] as String? ?? 'pending');
   }
 
-  /// Get nomor yang sedang dipanggil/dilayani untuk counter tertentu.
-  Future<DocumentSnapshot<Map<String, dynamic>>?> getCurrentServing(
-    String counterId,
-  ) async {
-    final result = await _db
-        .collection('queues')
-        .where('counter', isEqualTo: counterId)
-        .where('dateKey', isEqualTo: _todayKey)
-        .where('status', whereIn: ['called', 'serving'])
-        .orderBy('called_at', descending: true)
-        .limit(1)
-        .get()
-        .timeout(_timeout);
-
-    if (result.docs.isEmpty) return null;
-    return result.docs.first;
-  }
-
-  /// Get jumlah antrian menunggu untuk counter tertentu.
-  Future<int> getWaitingCount(String counterId) async {
-    final result = await _db
-        .collection('queues')
-        .where('counter', isEqualTo: counterId)
-        .where('dateKey', isEqualTo: _todayKey)
-        .where('status', isEqualTo: 'waiting')
-        .count()
-        .get()
-        .timeout(_timeout);
-    return result.count ?? 0;
-  }
 }

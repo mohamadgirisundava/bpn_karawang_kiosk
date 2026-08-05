@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import '../../../domain/entities/queue_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../core/utils/error_message.dart';
@@ -31,7 +31,7 @@ class CounterCubit extends Cubit<CounterState> {
 
       emit(state.copyWith(status: CounterStatus.loaded, counters: counters));
 
-      await refreshQueueInfo();
+      refreshQueueInfo();
       _setupRealtime();
     } catch (e) {
       emit(
@@ -43,41 +43,33 @@ class CounterCubit extends Cubit<CounterState> {
     }
   }
 
-  /// Refresh info antrian untuk semua counter. Query pertama abis app
-  /// cold-start kadang gagal/timeout gara-gara koneksi Firestore-nya
-  /// belum "anget" (belum pernah ada request sebelumnya) — dulu ini
-  /// diem-diem gagal dan nyangkut nampilin 0 antrian sampai ada trigger
-  /// nggak sengaja dari tempat lain yang mancing refresh ulang. Sekarang
-  /// retry sendiri beberapa kali dengan jeda, biar biasanya udah kebenerin
-  /// sendiri sebelum sempat kelihatan user.
-  Future<void> refreshQueueInfo() async {
-    if (state.counters.isEmpty) return;
-    final ids = state.counters.map((c) => c.id).toList();
+  /// Hitung ulang info antrian dari snapshot yang sudah ada di memori.
+  ///
+  /// Dulu di sini ada retry 3x berjeda 2 detik, karena query pertama sehabis
+  /// cold-start sering gagal/timeout dan bikin layar nyangkut nampilin "0
+  /// antrian" yang kelihatan valid. Sekarang nggak ada query sama sekali —
+  /// nggak ada yang bisa gagal, jadi retry-nya ikut hilang. Kalau
+  /// snapshot-nya sendiri belum datang, daftarnya memang masih kosong dan
+  /// akan terisi begitu Firestore mengirimnya.
+  void refreshQueueInfo() => _applyQueues(RealtimeService.instance.todayQueues);
 
-    const maxAttempts = 3;
-    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        final info = await _getQueueInfo.getAll(ids);
-        if (isClosed) return;
-        emit(state.copyWith(queueInfo: info));
-        return;
-      } catch (e) {
-        debugPrint(
-          'CounterCubit: gagal ambil info antrian (percobaan $attempt): $e',
-        );
-        if (attempt == maxAttempts) return; // Pakai data lama, nyerah.
-        await Future<void>.delayed(const Duration(seconds: 2));
-      }
-    }
+  void _applyQueues(List<QueueEntity> todayQueues) {
+    if (isClosed || state.counters.isEmpty) return;
+    emit(
+      state.copyWith(
+        queueInfo: _getQueueInfo.getAll(
+          todayQueues,
+          state.counters.map((c) => c.id).toList(),
+        ),
+      ),
+    );
   }
 
   void _setupRealtime() {
     _queueSub?.cancel();
     _counterSub?.cancel();
 
-    _queueSub = RealtimeService.instance.onQueueUpdate.listen((_) {
-      refreshQueueInfo();
-    });
+    _queueSub = RealtimeService.instance.onQueuesData.listen(_applyQueues);
 
     _counterSub = RealtimeService.instance.onCounterUpdate.listen((_) {
       loadCounters();

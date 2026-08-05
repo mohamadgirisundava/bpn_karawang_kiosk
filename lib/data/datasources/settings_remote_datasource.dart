@@ -50,4 +50,26 @@ class SettingsRemoteDatasource {
   void invalidateCache() {
     _lastFetch = null;
   }
+
+  /// Isi cache langsung dari snapshot realtime.
+  ///
+  /// Listener `settings` sudah menerima dokumen-dokumen ini dan itu sudah
+  /// dibayar; dulu perubahan settings cuma membatalkan cache, sehingga
+  /// pembacaan berikutnya menjalankan `.get()` untuk isi yang PERSIS SAMA.
+  /// Sekarang datanya dipakai langsung — nol query susulan.
+  void primeCache(QuerySnapshot<Map<String, dynamic>> snapshot) {
+    _cache
+      ..clear()
+      ..addEntries(
+        snapshot.docs.map(
+          (doc) =>
+              MapEntry(doc.id, (doc.data()['value'] as String? ?? '').trim()),
+        ),
+      );
+    _lastFetch = DateTime.now();
+  }
+
+  /// Isi cache saat ini, tanpa menunggu. Dipakai gerbang jam layanan
+  /// (`ServiceWindow`) yang harus bisa memutuskan secara sinkron.
+  Map<String, String> get cachedValues => Map.unmodifiable(_cache);
 }

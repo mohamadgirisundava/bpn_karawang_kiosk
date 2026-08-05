@@ -38,7 +38,17 @@ Data flow: `screen` → `cubit` → `usecase` → `repository` (interface) → `
 
 **Firebase connection**: initialized in `lib/main.dart` via `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` — config comes from `firebase_options.dart`, so there is no hardcoded host to switch between dev and prod.
 
-Realtime updates (e.g. live queue status) go through `lib/core/services/realtime_service.dart`, which uses Firestore `snapshots()` streams rather than polling.
+### Reads are snapshot-driven — do not add queue queries
+
+Realtime updates go through `lib/core/services/realtime_service.dart`. **The listener is the data source, not a change notification.** `RealtimeService.todayQueues` holds today's `queues` snapshot and `onQueuesData` broadcasts it; `GetQueueInfo` is a pure function that derives "currently serving" + "waiting count" per service from that list. `QueueRepository` has no read methods left.
+
+Until 2026-08-05 each realtime event triggered 2 queries *per service*, so 185 tickets cost **69,672 reads (~350/ticket)** across all apps and blew the 50,000/day free quota mid-service. Measured after the change: **6.9 reads per ticket per client**. If you need today's queue data, derive it from the snapshot; for older data use a one-off `.get()` outside the realtime path.
+
+Related:
+
+- **No `calls` listener in `RealtimeService`.** `onCallUpdate` had zero consumers — `CallAnnouncerService` has its own, already filtered to `is_active` + `limit(1)`.
+- **Listeners are released outside operating hours** (`core/services/service_window.dart`). The `settings` listener stays alive as the schedule source; everything else is gated. The window is deliberately wide (30 min before the earliest open, 60 min after the latest close, honouring the satpam override) and **fails open** when settings are unreadable. It ignores `work_days` on purpose — see the reasoning already recorded in `operating_hours_service.dart` about date-based blocking being one-sided risk.
+- `SettingsRemoteDatasource.primeCache` fills the settings cache straight from the snapshot instead of invalidating it and re-fetching the same 20 docs.
 
 **Taking a ticket is a transaction.** `QueueRemoteDatasource.createQueue` increments `queue_counters/{counterId}_{date}.lastNumber` and writes the `queues` doc inside one `runTransaction`, so simultaneous presses can't produce duplicate numbers. Printing is deliberately decoupled: a `print_jobs` doc is only created when the user presses "Cetak Tiket Antrian", not when the number is taken.
 
