@@ -149,6 +149,16 @@ class RealtimeService {
   Future<void> _subscribeHeavy() async {
     if (_subscribed) return;
 
+    // Tanggalnya dihitung ULANG di sini, bukan sekali saat objek ini dibuat.
+    //
+    // Service ini singleton, dan method ini dipanggil lagi tiap kali gerbang
+    // jam layanan membangunkan aplikasi — termasuk pagi berikutnya. Kalau
+    // `_subscribedDate` cuma diisi di deklarasi field, dia terkunci ke
+    // tanggal saat kiosk pertama dinyalakan, dan setelah lewat tengah malam
+    // aplikasi menyambung ke tanggal KEMARIN: antrian hari baru nggak pernah
+    // muncul walau datanya ada.
+    _subscribedDate = _todayKey();
+
     try {
       _subscriptions.add(
         _db
