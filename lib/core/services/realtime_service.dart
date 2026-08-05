@@ -183,9 +183,14 @@ class RealtimeService {
       // dokumen yang sama tanpa ada yang membacanya.
 
       // Tengah malam listener `queues` harus dibuat ulang dengan tanggal
-      // baru. Diperiksa tiap 10 menit — murah, dan cuma menembak Firestore
-      // kalau tanggalnya benar-benar berganti.
-      _dateWatcher ??= Timer.periodic(const Duration(minutes: 10), (_) {
+      // baru — kalau nggak, dia terus mendengarkan tanggal kemarin dan
+      // antrian hari baru NGGAK PERNAH muncul.
+      //
+      // Diperiksa tiap menit, bukan tiap 10 menit. Pengecekannya sendiri
+      // gratis (cuma banding string) dan baru menembak Firestore kalau
+      // tanggalnya benar-benar berganti, jadi interval rapat nggak menambah
+      // biaya apa pun — yang dipotong cuma lamanya layar salah tanggal.
+      _dateWatcher ??= Timer.periodic(const Duration(minutes: 1), (_) {
         final today = _todayKey();
         if (today == _subscribedDate) return;
         debugPrint('Realtime: ganti hari $_subscribedDate -> $today');
