@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../utils/firestore_value.dart';
 import 'background_audio.dart';
 
 /// Nama angka 0-9 untuk mengeja kode antrian.
@@ -19,21 +20,6 @@ const List<String> _ones = [
   'delapan',
   'sembilan',
 ];
-
-/// Angka ke kata Bahasa Indonesia ("1" -> "satu", "10" -> "sepuluh", "100"
-/// -> "seratus") — dibaca sebagai angka utuh, bukan dieja digit-per-digit
-/// (yang kedengeran berulang-ulang dan sebagian mesin TTS ngucapin "nol"
-/// yang jelek/bergetar — sudah dites di app Display).
-/// Pisah kode antrian jadi huruf loket + nomor ("A001" -> "A" + 1).
-/// Baca field angka dari data Firestore secara toleran — beberapa dokumen
-/// bisa nyimpen angka sebagai string (input manual lewat Console), bukan
-/// number asli.
-int _asInt(dynamic value, {int fallback = 0}) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  if (value is String) return int.tryParse(value) ?? fallback;
-  return fallback;
-}
 
 /// Eja kode antrian per karakter: "A1001" jadi "A, satu, nol, nol, satu".
 ///
@@ -67,7 +53,7 @@ String _spellQueueCode(String code) {
 String _buildAnnouncementText(Map<String, dynamic> data) {
   final code = data['queue_code'] as String? ?? '';
   final spokenCode = _spellQueueCode(code);
-  final deskNumber = _asInt(data['desk_number']);
+  final deskNumber = asInt(data['desk_number']);
   // Nomor loket sengaja TIDAK dieja per angka — "loket sepuluh" lebih
   // wajar didengar daripada "loket satu nol".
   final desk = deskNumber != 0 ? ', silakan menuju loket $deskNumber' : '';

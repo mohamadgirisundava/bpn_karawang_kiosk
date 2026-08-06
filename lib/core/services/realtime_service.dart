@@ -165,25 +165,40 @@ class RealtimeService {
             .collection('queues')
             .where('dateKey', isEqualTo: _subscribedDate)
             .snapshots()
-            .listen((snapshot) {
-              debugPrint(
-                'Realtime queues: ${snapshot.docChanges.length} change(s), '
-                '${snapshot.docs.length} dokumen',
-              );
-              _todayQueues = snapshot.docs
-                  .map(QueueModel.fromDoc)
-                  .toList(growable: false);
-              _queuesDataController.add(_todayQueues);
-            }),
+            .listen(
+              (snapshot) {
+                debugPrint(
+                  'Realtime queues: ${snapshot.docChanges.length} change(s), '
+                  '${snapshot.docs.length} dokumen',
+                );
+                _todayQueues = snapshot.docs
+                    .map(QueueModel.fromDoc)
+                    .toList(growable: false);
+                _queuesDataController.add(_todayQueues);
+              },
+              // Tanpa ini, error di dalam handler jadi uncaught zone error:
+              // di rilis nggak kelihatan sama sekali, `_todayQueues` diam-diam
+              // tetap kosong, dan papan antrian menampilkan "0 orang dalam
+              // antrian" yang KELIHATAN valid. Persis itu yang terjadi pada
+              // 2026-08-06 gara-gara satu cast tipe.
+              onError: (Object e) => debugPrint('Realtime queues error: $e'),
+            ),
       );
 
       _subscriptions.add(
-        _db.collection('counters').snapshots().listen((snapshot) {
-          debugPrint(
-            'Realtime counters: ${snapshot.docChanges.length} change(s)',
-          );
-          _counterUpdateController.add(null);
-        }),
+        _db
+            .collection('counters')
+            .snapshots()
+            .listen(
+              (snapshot) {
+                debugPrint(
+                  'Realtime counters: ${snapshot.docChanges.length} change(s)',
+                );
+                _counterUpdateController.add(null);
+              },
+              onError: (Object e) =>
+                  debugPrint('Realtime counters error: $e'),
+            ),
       );
 
       // Listener `calls` sengaja NGGAK ADA di sini. `onCallUpdate` dulu nol

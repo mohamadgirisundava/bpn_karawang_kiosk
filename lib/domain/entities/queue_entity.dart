@@ -12,7 +12,12 @@ class QueueEntity extends Equatable {
   final String? calledAt;
   final String? completedAt;
   final String? calledBy;
-  final String? deskNumber;
+
+  /// Nomor meja fisik saat dipanggil. **Number di Firestore**, bukan string —
+  /// app Loket menulisnya lewat `required int deskNumber`. Sempat dideklarasi
+  /// `String?` di sini, dan cast-nya throw untuk tiap tiket yang sudah
+  /// dipanggil (lihat `core/utils/firestore_value.dart`).
+  final int? deskNumber;
   final String? applicantType;
 
   const QueueEntity({

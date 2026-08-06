@@ -58,7 +58,9 @@ See **`bpn_karawang_loket/COLLECTIONS.md`** — the single authoritative descrip
 
 Collections this app touches: `counters`, `queues`, `queue_counters`, `print_jobs`, `calls`, `settings`, `announcements`, `voice_announcements`, `audio_schedules`, `prayer_schedule`.
 
-Two traps worth knowing before you write a query here:
+Three traps worth knowing before you write a query here:
+
+- **Read Firestore fields through `core/utils/firestore_value.dart`, never a direct cast.** `RealtimeService` maps the whole snapshot in one `map().toList()`, so a single document whose type differs from the cast throws and leaves `todayQueues` empty — the board then shows "0 orang dalam antrian" for *every* service, and it looks like valid data. That is exactly what happened on 2026-08-06: `desk_number` is a number (loket writes `required int deskNumber`) but `QueueModel` read it `as String?`, so every already-called ticket blew up the mapping. The listeners now log `onError`, but tolerant parsing is the actual guard.
 
 - **`date` and `dateKey` hold the same `"YYYY-MM-DD"` string.** Every query filters on `dateKey`; `date` is a PocketBase leftover that's still written. New docs must set both — the rules require it.
 - **`audio_schedules` uses camelCase** (`audioUrl`, `isActive`, `repeatType`, `lastPlayedAt`), unlike every other collection.
