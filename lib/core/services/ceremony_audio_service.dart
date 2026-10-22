@@ -187,6 +187,7 @@ class CeremonyAudioService {
   DateTime? _settingsFetchedAt;
   String _jamCache = '';
   String _hariCache = '';
+  String _aktifCache = '';
 
   Future<void> _refreshSettings() async {
     final now = DateTime.now();
@@ -196,6 +197,7 @@ class CeremonyAudioService {
     final settings = Injection.instance.settingsDatasource;
     _jamCache = await settings.get('indonesia_raya_jam');
     _hariCache = await settings.get('indonesia_raya_hari');
+    _aktifCache = await settings.get('indonesia_raya_aktif');
     _settingsFetchedAt = now;
   }
 
@@ -205,6 +207,13 @@ class CeremonyAudioService {
     if (_playedDate == _todayKey) return;
 
     await _refreshSettings();
+
+    // Sakelar "Putar Indonesia Raya" di Pengaturan Loket. Hanya "false"
+    // yang mematikan: key yang belum pernah disimpan berarti nyala, supaya
+    // pemasangan yang belum menyentuh sakelarnya tetap berbunyi seperti
+    // sebelumnya. Uji manual dari Loket sengaja nggak lewat sini, jadi
+    // speaker tetap bisa dites walau jadwalnya dimatikan.
+    if (_aktifCache.trim().toLowerCase() == 'false') return;
 
     // Hari yang dipilih admin, boleh meloncat (mis. Senin dan Kamis saja).
     // Kosong berarti hari kerja — perilaku lama, biar pemasangan yang belum
