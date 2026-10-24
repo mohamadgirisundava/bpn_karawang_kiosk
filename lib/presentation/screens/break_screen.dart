@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_radius.dart';
 import '../../core/utils/responsive.dart';
-import '../widgets/glossy_avatar.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/brand.dart';
+import '../widgets/code_avatar.dart';
 import '../widgets/kiosk_settings_menu.dart';
+import '../widgets/status_badge.dart';
 
 /// Ditampilkan alih-alih IdleScreen kalau kiosk lagi "Mode Istirahat" —
 /// satpam sengaja nonaktifkan sementara ambil nomor antrian pas nggak
@@ -23,91 +23,45 @@ class BreakScreen extends StatelessWidget {
       canPop: false,
       child: Scaffold(
         backgroundColor: AppColors.white,
-        body: SizedBox.expand(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onLongPress: () => showKioskSettingsMenu(context),
-                  child: Image.asset(
-                    'assets/images/bpn_karawang_logo.png',
-                    width: Responsive.w(160),
-                    height: Responsive.w(160),
-                    errorBuilder: (context, error, stackTrace) {
-                      return GlossyAvatar(
-                        icon: Icons.account_balance,
-                        shape: BoxShape.circle,
-                        size: Responsive.w(160),
-                        fontSize: Responsive.sp(100),
-                      );
-                    },
-                  ),
+        body: IdentityLayout(
+          title: 'Ambil Nomor\nAntrian',
+          subtitle: 'Sistem antrian pelayanan pertanahan\nKabupaten Karawang.',
+          onLogoLongPress: () => showKioskSettingsMenu(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CodeAvatar(
+                icon: Icons.pause_rounded,
+                size: Responsive.w(76),
+                color: AppColors.orange,
+              ),
+              SizedBox(height: Responsive.h(28)),
+              StatusBadge(
+                label: 'Sedang istirahat',
+                color: AppColors.orange,
+                fontSize: Responsive.sp(14),
+              ),
+              SizedBox(height: Responsive.h(14)),
+              Text(
+                'Pengambilan nomor antrian sementara tidak tersedia',
+                style: TextStyle(
+                  fontSize: Responsive.sp(28),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                  height: 1.2,
                 ),
-                SizedBox(height: Responsive.h(24)),
-                Text(
-                  'Kantor Pertanahan\nKabupaten Karawang',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: Responsive.sp(28),
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.navy,
-                  ),
+              ),
+              SizedBox(height: Responsive.h(14)),
+              Text(
+                'Mohon tunggu, petugas akan segera kembali.',
+                style: TextStyle(
+                  fontSize: Responsive.sp(16),
+                  color: AppColors.textMuted,
+                  height: 1.5,
                 ),
-                SizedBox(height: Responsive.h(32)),
-                Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: GlossyStyle.decoration(
-                    AppColors.navy,
-                    radius: AppRadius.chip,
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      GlossyStyle.highlight(
-                        radius: AppRadius.chip,
-                        height: Responsive.h(18),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.w(20),
-                          vertical: Responsive.h(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.pause_circle_outline,
-                              color: Colors.white,
-                              size: Responsive.sp(20),
-                            ),
-                            SizedBox(width: Responsive.w(8)),
-                            Text(
-                              'SEDANG ISTIRAHAT',
-                              style: TextStyle(
-                                fontSize: Responsive.sp(16),
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: Responsive.h(14)),
-                Text(
-                  'Layanan pengambilan nomor antrian sementara tidak tersedia.\nMohon tunggu petugas kembali.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: Responsive.sp(14),
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

@@ -3,9 +3,12 @@ import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/services/operating_hours_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
-import '../widgets/glossy_avatar.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
+import '../widgets/brand.dart';
+import '../widgets/code_avatar.dart';
+import '../widgets/kiosk_dialog.dart';
 import '../widgets/kiosk_settings_menu.dart';
 import 'home_screen.dart';
 
@@ -27,43 +30,18 @@ class ClosedScreen extends StatelessWidget {
   Future<void> _confirmOpenAnyway(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        // Bentuk, ikon judul, dan pasangan tombol Batal + GradientButton
-        // sengaja disamakan persis dengan dialog Reset Antrian & Keluar
-        // Aplikasi di menu satpam — semuanya konfirmasi tindakan penting,
-        // jadi jangan sampai kelihatan dari aplikasi yang beda.
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.lock_open,
-              color: AppColors.orange,
-              size: Responsive.sp(28),
-            ),
-            SizedBox(width: Responsive.w(8)),
-            Expanded(
-              child: Text(
-                'Tetap Buka Layanan?',
-                style: TextStyle(
-                  fontSize: Responsive.sp(18),
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.navy,
-                ),
-              ),
-            ),
-          ],
-        ),
+      // Bentuk dan pasangan tombol Batal + AppButton sengaja disamakan
+      // persis dengan dialog Reset Antrian & Keluar Aplikasi di menu
+      // satpam — semuanya konfirmasi tindakan penting.
+      builder: (dialogContext) => KioskDialog(
+        icon: Icons.lock_open_rounded,
+        iconColor: AppColors.orange,
+        title: 'Tetap Buka Layanan?',
         content: Text(
           '${hours.message}\n\n'
           'Kalau layanan sebenarnya sedang berjalan, kiosk bisa dibuka '
           'sekarang. Pengaturan jam tidak diubah, dan kiosk kembali normal '
           'besok.',
-          style: TextStyle(
-            fontSize: Responsive.sp(14),
-            color: AppColors.textMuted,
-          ),
         ),
         actions: [
           TextButton(
@@ -71,9 +49,9 @@ class ClosedScreen extends StatelessWidget {
             style: AppButtonStyles.text(),
             child: const Text('Batal'),
           ),
-          GradientButton(
+          AppButton(
             label: 'Ya, Buka Layanan',
-            variant: GradientButtonVariant.warning,
+            variant: AppButtonVariant.warning,
             onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
@@ -91,104 +69,91 @@ class ClosedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Responsive.init(context);
 
+    final hasHours = hours.openTime.isNotEmpty && hours.closeTime.isNotEmpty;
+
     return PopScope(
       canPop: false,
       child: Scaffold(
         backgroundColor: AppColors.white,
-        body: SizedBox.expand(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Gesture rahasia yang sama kayak layar lain — satpam masih
-                // bisa masuk menu pengaturan dari sini.
-                GestureDetector(
-                  onLongPress: () => showKioskSettingsMenu(context),
-                  child: Image.asset(
-                    'assets/images/bpn_karawang_logo.png',
-                    width: Responsive.w(150),
-                    height: Responsive.w(150),
-                    errorBuilder: (context, error, stackTrace) => GlossyAvatar(
-                      icon: Icons.account_balance,
-                      shape: BoxShape.circle,
-                      size: Responsive.w(150),
-                      fontSize: Responsive.sp(94),
-                    ),
-                  ),
+        body: IdentityLayout(
+          title: 'Ambil Nomor\nAntrian',
+          subtitle: 'Sistem antrian pelayanan pertanahan\nKabupaten Karawang.',
+          // Gesture rahasia yang sama kayak layar lain — satpam masih bisa
+          // masuk menu pengaturan dari sini.
+          onLogoLongPress: () => showKioskSettingsMenu(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CodeAvatar(
+                icon: Icons.schedule_rounded,
+                size: Responsive.w(76),
+                color: AppColors.orange,
+              ),
+              SizedBox(height: Responsive.h(28)),
+              Text(
+                'Layanan Sedang Tutup',
+                style: TextStyle(
+                  fontSize: Responsive.sp(32),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                  height: 1.15,
                 ),
+              ),
+              SizedBox(height: Responsive.h(12)),
+              Text(
+                hours.message,
+                style: TextStyle(
+                  fontSize: Responsive.sp(16),
+                  color: AppColors.textMuted,
+                  height: 1.5,
+                ),
+              ),
+              if (hasHours) ...[
                 SizedBox(height: Responsive.h(24)),
-                Text(
-                  'Kantor Pertanahan\nKabupaten Karawang',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: Responsive.sp(20),
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.navy,
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.w(18),
+                    vertical: Responsive.sp(12),
                   ),
-                ),
-                SizedBox(height: Responsive.h(28)),
-                GlossyAvatar(
-                  icon: Icons.schedule,
-                  shape: BoxShape.circle,
-                  size: Responsive.w(72),
-                  color: AppColors.orange,
-                  fontSize: Responsive.sp(38),
-                ),
-                SizedBox(height: Responsive.h(16)),
-                Text(
-                  'Layanan Sedang Tutup',
-                  style: TextStyle(
-                    fontSize: Responsive.sp(26),
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.navy,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    border: Border.all(color: AppColors.border),
                   ),
-                ),
-                SizedBox(height: Responsive.h(8)),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: Responsive.w(40)),
-                  child: Text(
-                    hours.message,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: Responsive.sp(15),
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ),
-                if (hours.openTime.isNotEmpty &&
-                    hours.closeTime.isNotEmpty) ...[
-                  SizedBox(height: Responsive.h(16)),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Responsive.w(18),
-                      vertical: Responsive.h(10),
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                      border: Border.all(color: AppColors.border, width: 2),
-                    ),
-                    child: Text(
-                      'Jam layanan ${hours.openTime} - ${hours.closeTime} WIB',
-                      style: TextStyle(
-                        fontSize: Responsive.sp(14),
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.navy,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SectionLabel('Jam layanan'),
+                      SizedBox(height: Responsive.h(2)),
+                      Text(
+                        '${hours.openTime} – ${hours.closeTime} WIB',
+                        style: TextStyle(
+                          fontFamily: AppTheme.numberFamily,
+                          fontSize: Responsive.sp(22),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-                SizedBox(height: Responsive.h(32)),
-                // Ditulis terang-terangan buat petugas, bukan disembunyikan
-                // di gesture rahasia: kalau jam-nya keliru sementara layanan
-                // jalan, satpam harus bisa nemu jalan keluarnya cepat.
-                GradientButton(
-                  label: 'Buka Layanan (Petugas)',
-                  icon: Icons.lock_open,
-                  onPressed: () => _confirmOpenAnyway(context),
                 ),
               ],
-            ),
+              SizedBox(height: Responsive.h(40)),
+              // Ditulis terang-terangan buat petugas, bukan disembunyikan
+              // di gesture rahasia: kalau jam-nya keliru sementara layanan
+              // jalan, satpam harus bisa nemu jalan keluarnya cepat.
+              // Bergaris (bukan navy penuh) supaya pengunjung tidak
+              // membacanya sebagai tombol untuk mereka.
+              AppButton(
+                label: 'Buka Layanan (Petugas)',
+                icon: Icons.lock_open_rounded,
+                variant: AppButtonVariant.secondary,
+                onPressed: () => _confirmOpenAnyway(context),
+              ),
+            ],
           ),
         ),
       ),
