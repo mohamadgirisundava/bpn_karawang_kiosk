@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/services/print_relay_status_service.dart';
-import 'glossy_avatar.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_button_styles.dart';
 import '../../core/constants/app_colors.dart';
@@ -11,7 +10,9 @@ import '../../core/services/realtime_service.dart';
 import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../screens/break_screen.dart';
-import 'gradient_button.dart';
+import 'app_button.dart';
+import 'code_avatar.dart';
+import 'kiosk_dialog.dart';
 import '../../core/services/operating_hours_service.dart';
 import '../screens/closed_screen.dart';
 import '../screens/idle_screen.dart';
@@ -42,6 +43,55 @@ Future<void> goToIdleOrBreak(BuildContext context) async {
   );
 }
 
+/// Satu baris aksi di menu satpam: ikon dalam kotak warna tipis, judul,
+/// keterangan. Semua baris menu memakai ini supaya seragam.
+class _MenuAction extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _MenuAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.color = AppColors.navy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: Responsive.w(8),
+        vertical: Responsive.h(4),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.control),
+      ),
+      enableFeedback: false,
+      leading: CodeAvatar(icon: icon, size: Responsive.w(40), color: color),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: Responsive.sp(16),
+          fontWeight: FontWeight.w700,
+          color: color == AppColors.danger ? AppColors.danger : null,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: Responsive.sp(13),
+          color: AppColors.textMuted,
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
 /// Menu admin kiosk — diakses lewat long-press logo (rahasia, cuma
 /// satpam yang tau letaknya). Sengaja TANPA input PIN: kiosk nggak
 /// punya keyboard fisik buat ngetik PIN, dan akses fisik ke
@@ -51,51 +101,20 @@ void showKioskSettingsMenu(BuildContext context) {
 
   showDialog(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-      ),
-      title: Row(
-        children: [
-          GlossyAvatar(
-            icon: Icons.settings,
-            size: Responsive.w(36),
-            color: AppColors.navy,
-          ),
-          SizedBox(width: Responsive.w(8)),
-          Text(
-            'Pengaturan',
-            style: TextStyle(
-              fontSize: Responsive.sp(18),
-              fontWeight: FontWeight.bold,
-              color: AppColors.navy,
-            ),
-          ),
-        ],
-      ),
+    builder: (dialogContext) => KioskDialog(
+      icon: Icons.settings_outlined,
+      title: 'Pengaturan',
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const _PrintRelayStatusTile(),
           if (OperatingHoursService.instance.isOverridden) ...[
             SizedBox(height: Responsive.h(8)),
-            ListTile(
-              leading: GlossyAvatar(
-                icon: Icons.lock_open,
-                size: Responsive.w(38),
-                color: AppColors.orange,
-              ),
-              title: Text(
-                'Ikuti Jam Layanan Lagi',
-                style: TextStyle(fontSize: Responsive.sp(16)),
-              ),
-              subtitle: Text(
-                'Saat ini layanan dipaksa buka di luar jam operasional',
-                style: TextStyle(
-                  fontSize: Responsive.sp(12),
-                  color: AppColors.textMuted,
-                ),
-              ),
+            _MenuAction(
+              icon: Icons.lock_open_rounded,
+              color: AppColors.orange,
+              title: 'Ikuti Jam Layanan Lagi',
+              subtitle: 'Saat ini layanan dipaksa buka di luar jam operasional',
               onTap: () {
                 OperatingHoursService.instance.clearOverride();
                 Navigator.of(context).pop();
@@ -104,27 +123,12 @@ void showKioskSettingsMenu(BuildContext context) {
             ),
           ],
           SizedBox(height: Responsive.h(12)),
-          ListTile(
-            leading: GlossyAvatar(
-              icon: isOnBreak
-                  ? Icons.play_circle_outline
-                  : Icons.pause_circle_outline,
-              size: Responsive.w(38),
-              color: AppColors.navy,
-            ),
-            title: Text(
-              isOnBreak ? 'Selesai Istirahat' : 'Mulai Istirahat',
-              style: TextStyle(fontSize: Responsive.sp(16)),
-            ),
-            subtitle: Text(
-              isOnBreak
-                  ? 'Aktifkan lagi ambil nomor antrian buat customer'
-                  : 'Sembunyikan ambil nomor antrian sementara (satpam sedang tidak di tempat)',
-              style: TextStyle(
-                fontSize: Responsive.sp(13),
-                color: AppColors.textMuted,
-              ),
-            ),
+          _MenuAction(
+            icon: isOnBreak ? Icons.play_arrow_rounded : Icons.pause_rounded,
+            title: isOnBreak ? 'Selesai Istirahat' : 'Mulai Istirahat',
+            subtitle: isOnBreak
+                ? 'Aktifkan lagi ambil nomor antrian buat customer'
+                : 'Sembunyikan ambil nomor antrian sementara (satpam sedang tidak di tempat)',
             onTap: () {
               Navigator.of(dialogContext).pop();
               if (isOnBreak) {
@@ -135,76 +139,34 @@ void showKioskSettingsMenu(BuildContext context) {
               goToIdleOrBreak(context);
             },
           ),
-          SizedBox(height: Responsive.h(8)),
-          Container(height: 2, color: AppColors.border),
-          SizedBox(height: Responsive.h(8)),
-          ListTile(
-            leading: GlossyAvatar(
-              icon: Icons.refresh,
-              size: Responsive.w(38),
-              color: AppColors.navy,
-            ),
-            title: Text(
-              'Restart ke Idle',
-              style: TextStyle(fontSize: Responsive.sp(16)),
-            ),
-            subtitle: Text(
-              'Kembali ke layar awal',
-              style: TextStyle(
-                fontSize: Responsive.sp(13),
-                color: AppColors.textMuted,
-              ),
-            ),
+          _MenuAction(
+            icon: Icons.refresh_rounded,
+            title: 'Restart ke Idle',
+            subtitle: 'Kembali ke layar awal',
             onTap: () {
               Navigator.of(dialogContext).pop();
               goToIdleOrBreak(context);
             },
           ),
-          SizedBox(height: Responsive.h(8)),
-          Container(height: 2, color: AppColors.border),
-          SizedBox(height: Responsive.h(8)),
-          ListTile(
-            leading: GlossyAvatar(
-              icon: Icons.restart_alt,
-              size: Responsive.w(38),
-              color: AppColors.danger,
-            ),
-            title: Text(
-              'Reset Antrian',
-              style: TextStyle(fontSize: Responsive.sp(16)),
-            ),
-            subtitle: Text(
-              'Hapus semua tiket & panggilan hari ini, nomor urut balik ke 0',
-              style: TextStyle(
-                fontSize: Responsive.sp(13),
-                color: AppColors.textMuted,
-              ),
-            ),
+          SizedBox(height: Responsive.h(6)),
+          const Divider(),
+          SizedBox(height: Responsive.h(6)),
+          _MenuAction(
+            icon: Icons.restart_alt_rounded,
+            color: AppColors.danger,
+            title: 'Reset Antrian',
+            subtitle:
+                'Hapus semua tiket & panggilan hari ini, nomor urut balik ke 0',
             onTap: () {
               Navigator.of(dialogContext).pop();
               _confirmResetQueue(context);
             },
           ),
-          SizedBox(height: Responsive.h(8)),
-          Container(height: 2, color: AppColors.border),
-          SizedBox(height: Responsive.h(8)),
-          ListTile(
-            leading: GlossyAvatar(
-              icon: Icons.exit_to_app,
-              size: Responsive.w(38),
-              color: AppColors.danger,
-            ),
-            title: Text(
-              'Keluar Aplikasi',
-              style: TextStyle(fontSize: Responsive.sp(16)),
-            ),
-            subtitle: Text(
-              'Tutup aplikasi kiosk',
-              style: TextStyle(
-                fontSize: Responsive.sp(13),
-                color: AppColors.textMuted,
-              ),
-            ),
+          _MenuAction(
+            icon: Icons.logout_rounded,
+            color: AppColors.danger,
+            title: 'Keluar Aplikasi',
+            subtitle: 'Tutup aplikasi kiosk',
             onTap: () {
               Navigator.of(dialogContext).pop();
               confirmExitKiosk(context);
@@ -229,39 +191,15 @@ void showKioskSettingsMenu(BuildContext context) {
 void _confirmResetQueue(BuildContext context) {
   showDialog(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-      ),
-      title: Row(
-        children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: AppColors.danger,
-            size: Responsive.sp(28),
-          ),
-          SizedBox(width: Responsive.w(8)),
-          Expanded(
-            child: Text(
-              'Reset Antrian Hari Ini?',
-              style: TextStyle(
-                fontSize: Responsive.sp(18),
-                fontWeight: FontWeight.bold,
-                color: AppColors.navy,
-              ),
-            ),
-          ),
-        ],
-      ),
-      content: Text(
+    builder: (dialogContext) => KioskDialog(
+      icon: Icons.warning_amber_rounded,
+      iconColor: AppColors.danger,
+      title: 'Reset Antrian Hari Ini?',
+      content: const Text(
         'Semua tiket & panggilan aktif HARI INI akan DIHAPUS PERMANEN, dan nomor '
         'urut tiap loket balik ke 0. Tindakan ini tidak bisa dibatalkan.\n\n'
         'Pastikan memang diperlukan (mis. testing pagi sebelum buka layanan, atau '
         'ada kesalahan sistem) sebelum lanjut.',
-        style: TextStyle(
-          fontSize: Responsive.sp(14),
-          color: AppColors.textMuted,
-        ),
       ),
       actions: [
         TextButton(
@@ -269,9 +207,9 @@ void _confirmResetQueue(BuildContext context) {
           style: AppButtonStyles.text(),
           child: const Text('Batal'),
         ),
-        GradientButton(
+        AppButton(
           label: 'Ya, Reset Antrian',
-          variant: GradientButtonVariant.destructive,
+          variant: AppButtonVariant.destructive,
           onPressed: () {
             Navigator.of(dialogContext).pop();
             _runResetQueue(context);
@@ -288,7 +226,7 @@ Future<void> _runResetQueue(BuildContext context) async {
     barrierDismissible: false,
     builder: (dialogContext) => AlertDialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.card),
+        borderRadius: BorderRadius.circular(AppRadius.cardLarge),
       ),
       content: Row(
         mainAxisSize: MainAxisSize.min,
@@ -296,9 +234,9 @@ Future<void> _runResetQueue(BuildContext context) async {
           SizedBox(
             width: Responsive.sp(28),
             height: Responsive.sp(28),
-            child: CircularProgressIndicator(
+            child: const CircularProgressIndicator(
               strokeWidth: 3,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.navy),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy),
             ),
           ),
           SizedBox(width: Responsive.w(18)),
@@ -307,7 +245,7 @@ Future<void> _runResetQueue(BuildContext context) async {
             style: TextStyle(
               fontSize: Responsive.sp(16),
               fontWeight: FontWeight.w600,
-              color: AppColors.navy,
+              color: AppColors.textDark,
             ),
           ),
         ],
@@ -344,24 +282,12 @@ Future<void> _runResetQueue(BuildContext context) async {
 void confirmExitKiosk(BuildContext context) {
   showDialog(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-      ),
-      title: Text(
-        'Keluar Aplikasi?',
-        style: TextStyle(
-          fontSize: Responsive.sp(18),
-          fontWeight: FontWeight.bold,
-          color: AppColors.navy,
-        ),
-      ),
-      content: Text(
+    builder: (dialogContext) => KioskDialog(
+      icon: Icons.logout_rounded,
+      iconColor: AppColors.danger,
+      title: 'Keluar Aplikasi?',
+      content: const Text(
         'Aplikasi kiosk akan ditutup. Pastikan ini memang diperlukan.',
-        style: TextStyle(
-          fontSize: Responsive.sp(14),
-          color: AppColors.textMuted,
-        ),
       ),
       actions: [
         TextButton(
@@ -369,9 +295,9 @@ void confirmExitKiosk(BuildContext context) {
           style: AppButtonStyles.text(),
           child: const Text('Batal'),
         ),
-        GradientButton(
+        AppButton(
           label: 'Keluar',
-          variant: GradientButtonVariant.destructive,
+          variant: AppButtonVariant.destructive,
           onPressed: () => SystemNavigator.pop(),
         ),
       ],
@@ -382,11 +308,11 @@ void confirmExitKiosk(BuildContext context) {
 /// Status printer buat satpam — dia garda terdepan yang ditanya pengunjung
 /// waktu tiket nggak keluar, jadi dia yang paling perlu tau duluan.
 ///
-/// Sengaja BUKAN ListTile dengan avatar glossy kayak baris lain di menu ini:
-/// baris-baris itu semuanya aksi yang bisa ditekan, dan kalau status ikut
-/// bergaya sama, dia kebaca seolah bisa diklik padahal cuma informasi.
-/// Bentuknya panel bertepi berwarna — beda jelas, dan warnanya sekaligus
-/// jadi sinyal kondisi.
+/// Sengaja BUKAN baris aksi seperti baris lain di menu ini: baris-baris itu
+/// semuanya aksi yang bisa ditekan, dan kalau status ikut bergaya sama, dia
+/// kebaca seolah bisa diklik padahal cuma informasi. Bentuknya panel
+/// berlatar warna tipis — beda jelas, dan warnanya sekaligus jadi sinyal
+/// kondisi.
 ///
 /// Dibaca realtime, bukan sekali waktu menu dibuka, supaya statusnya ikut
 /// berubah kalau printer pulih sambil menu masih kebuka.
@@ -403,21 +329,20 @@ class _PrintRelayStatusTile extends StatelessWidget {
         final ok = status?.healthy ?? false;
         final color = loading
             ? AppColors.textMuted
-            : (ok ? AppColors.green : AppColors.orange);
+            : (ok ? AppColors.success : AppColors.orange);
 
         return Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(
-            horizontal: Responsive.w(12),
-            vertical: Responsive.h(10),
+            horizontal: Responsive.w(14),
+            vertical: Responsive.sp(12),
           ),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-            border: Border.all(
-              color: color.withValues(alpha: 0.45),
-              width: 1.5,
+            color: Color.alphaBlend(
+              color.withValues(alpha: 0.1),
+              AppColors.white,
             ),
+            borderRadius: BorderRadius.circular(AppRadius.card),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,9 +355,9 @@ class _PrintRelayStatusTile extends StatelessWidget {
                 )
               else
                 Icon(
-                  ok ? Icons.check_circle : Icons.error_outline,
+                  ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
                   color: color,
-                  size: Responsive.sp(18),
+                  size: Responsive.sp(20),
                 ),
               SizedBox(width: Responsive.w(10)),
               Expanded(
@@ -445,8 +370,8 @@ class _PrintRelayStatusTile extends StatelessWidget {
                           ? 'Memeriksa printer...'
                           : (ok ? 'Printer Siap' : 'Printer Bermasalah'),
                       style: TextStyle(
-                        fontSize: Responsive.sp(14),
-                        fontWeight: FontWeight.bold,
+                        fontSize: Responsive.sp(15),
+                        fontWeight: FontWeight.w700,
                         color: color,
                       ),
                     ),
@@ -455,7 +380,7 @@ class _PrintRelayStatusTile extends StatelessWidget {
                       Text(
                         status.message,
                         style: TextStyle(
-                          fontSize: Responsive.sp(12),
+                          fontSize: Responsive.sp(13),
                           color: AppColors.textMuted,
                         ),
                       ),

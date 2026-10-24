@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
 import '../cubits/queue/queue_cubit.dart';
 import '../cubits/queue/queue_state.dart';
+import '../widgets/app_button.dart';
 import '../widgets/app_footer.dart';
-import '../widgets/glossy_badge.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/brand.dart';
+import '../widgets/clock_widget.dart';
+import '../widgets/code_avatar.dart';
+import '../widgets/status_badge.dart';
 
 /// Queue Info Screen - Menampilkan informasi antrian berjalan
 /// dan estimasi sisa antrian untuk setiap counter.
@@ -40,77 +44,37 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
         backgroundColor: AppColors.background,
         body: Column(
           children: [
-            Container(
-              width: double.infinity,
-              height: 100,
-              padding: EdgeInsets.only(
-                left: Responsive.w(8),
-                right: Responsive.w(14),
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.navy,
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppColors.gold,
-                    width: Responsive.h(3),
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: AppColors.white,
-                      size: Responsive.sp(20),
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Informasi Antrian',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'NunitoSans',
-                        fontSize: Responsive.sp(16),
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: Responsive.w(40)),
-                ],
-              ),
+            KioskHeader(
+              title: 'Informasi Antrian',
+              onBack: () => Navigator.of(context).pop(),
+              trailing: const [ClockWidget()],
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(Responsive.w(16)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: Responsive.w(80),
+                  vertical: Responsive.h(40),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Nomor Antrian Berjalan',
-                            style: TextStyle(
-                              fontSize: Responsive.sp(18),
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.navy,
-                            ),
-                          ),
-                          SizedBox(height: Responsive.h(3)),
-                          Text(
-                            'Update secara real-time',
-                            style: TextStyle(
-                              fontSize: Responsive.sp(12),
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      'Nomor antrian berjalan',
+                      style: TextStyle(
+                        fontSize: Responsive.sp(26),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
                       ),
                     ),
-                    SizedBox(height: Responsive.h(14)),
+                    SizedBox(height: Responsive.h(6)),
+                    Text(
+                      'Diperbarui otomatis setiap ada panggilan.',
+                      style: TextStyle(
+                        fontSize: Responsive.sp(15),
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    SizedBox(height: Responsive.h(24)),
                     Expanded(
                       child: BlocBuilder<QueueInfoCubit, QueueInfoState>(
                         builder: (context, state) {
@@ -125,26 +89,26 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                           if (state.status == QueueInfoStatus.error) {
                             return Center(
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.cloud_off,
-                                    size: Responsive.sp(48),
-                                    color: Colors.red.shade300,
+                                  CodeAvatar(
+                                    icon: Icons.cloud_off_rounded,
+                                    size: Responsive.w(72),
+                                    color: AppColors.danger,
                                   ),
-                                  SizedBox(height: Responsive.h(12)),
+                                  SizedBox(height: Responsive.h(16)),
                                   Text(
                                     state.errorMessage,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: Responsive.sp(14),
+                                      fontSize: Responsive.sp(15),
                                       color: AppColors.textMuted,
                                     ),
                                   ),
-                                  SizedBox(height: Responsive.h(16)),
-                                  GradientButton(
+                                  SizedBox(height: Responsive.h(20)),
+                                  AppButton(
                                     label: 'Coba Lagi',
-                                    icon: Icons.refresh,
+                                    icon: Icons.refresh_rounded,
                                     onPressed: () => _queueInfoCubit.loadData(),
                                   ),
                                 ],
@@ -157,7 +121,7 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                               child: Text(
                                 'Belum ada loket aktif saat ini',
                                 style: TextStyle(
-                                  fontSize: Responsive.sp(14),
+                                  fontSize: Responsive.sp(16),
                                   color: AppColors.textMuted,
                                 ),
                               ),
@@ -184,9 +148,6 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                                   rows;
 
                               return GridView.builder(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: Responsive.w(50),
-                                ),
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
@@ -206,14 +167,6 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
                         },
                       ),
                     ),
-                    SizedBox(height: Responsive.h(16)),
-                    SizedBox(
-                      width: double.infinity,
-                      child: GradientButton(
-                        label: 'Kembali ke Menu Utama',
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -230,105 +183,71 @@ class _QueueInfoScreenState extends State<QueueInfoScreen> {
     final nomorSekarang = info?.currentServing ?? '-';
     final sisaAntrian = info?.waitingCount ?? 0;
     final estimasiMenit = sisaAntrian * state.estimatePerPerson;
+    final mutedStyle = TextStyle(
+      fontSize: Responsive.sp(13),
+      color: AppColors.textMuted,
+    );
 
     return Container(
-      clipBehavior: Clip.antiAlias,
+      padding: EdgeInsets.all(Responsive.w(18)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 2),
+        borderRadius: BorderRadius.circular(AppRadius.cardLarge),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned.fill(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(16),
-                vertical: Responsive.h(12),
+          Row(
+            children: [
+              CodeAvatar(code: counter.code, size: Responsive.w(40)),
+              SizedBox(width: Responsive.w(12)),
+              Expanded(
+                child: Text(
+                  counter.description,
+                  style: TextStyle(
+                    fontSize: Responsive.sp(16),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              if (counter.isPriority)
+                const StatusBadge(label: 'Prioritas', color: AppColors.orange),
+            ],
+          ),
+          Expanded(
+            child: Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  const SectionLabel('Sedang dilayani'),
                   Text(
-                    counter.name.toUpperCase(),
+                    nomorSekarang,
                     style: TextStyle(
-                      fontSize: Responsive.sp(12),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.6,
-                      color: AppColors.textMuted,
+                      fontFamily: AppTheme.numberFamily,
+                      fontSize: Responsive.sp(40),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.navy,
+                      height: 1.15,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: Responsive.h(8)),
-                  Container(height: 2, color: AppColors.border),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        nomorSekarang,
-                        style: TextStyle(
-                          fontSize: Responsive.sp(30),
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.navy,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.people,
-                            size: Responsive.sp(12),
-                            color: AppColors.textMuted,
-                          ),
-                          SizedBox(width: Responsive.w(3)),
-                          Text(
-                            '$sisaAntrian antrian',
-                            style: TextStyle(
-                              fontSize: Responsive.sp(10),
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            size: Responsive.sp(12),
-                            color: AppColors.textMuted,
-                          ),
-                          SizedBox(width: Responsive.w(3)),
-                          Text(
-                            '~$estimasiMenit menit',
-                            style: TextStyle(
-                              fontSize: Responsive.sp(10),
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
           ),
-          if (counter.isPriority)
-            Positioned(
-              top: Responsive.h(10),
-              right: Responsive.w(10),
-              child: const GlossyBadge(
-                label: 'PRIORITAS',
-                color: AppColors.orange,
-              ),
-            ),
+          const Divider(),
+          SizedBox(height: Responsive.h(10)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$sisaAntrian menunggu', style: mutedStyle),
+              Text('± $estimasiMenit menit', style: mutedStyle),
+            ],
+          ),
         ],
       ),
     );

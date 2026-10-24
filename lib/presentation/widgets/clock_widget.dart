@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 
-/// Widget jam dan tanggal real-time untuk header kiosk.
+/// Widget jam dan tanggal real-time untuk header putih kiosk.
 class ClockWidget extends StatefulWidget {
   const ClockWidget({super.key});
 
@@ -80,19 +81,19 @@ class _ClockWidgetState extends State<ClockWidget> {
         Text(
           _formattedTime,
           style: TextStyle(
-            fontFamily: 'NunitoSans',
+            fontFamily: AppTheme.numberFamily,
             fontSize: Responsive.sp(20),
-            fontWeight: FontWeight.bold,
-            color: AppColors.white,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+            height: 1.15,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         Text(
           _formattedDate,
           style: TextStyle(
-            fontFamily: 'NunitoSans',
-            fontSize: Responsive.sp(11),
-            color: AppColors.goldLight,
+            fontSize: Responsive.sp(12.5),
+            color: AppColors.textMuted,
           ),
         ),
       ],

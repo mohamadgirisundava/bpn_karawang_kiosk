@@ -6,7 +6,10 @@ import '../../core/utils/audio_feedback.dart';
 import '../../core/utils/responsive.dart';
 import '../../domain/entities/applicant_type.dart';
 import '../../domain/entities/counter_entity.dart';
+import '../widgets/app_footer.dart';
+import '../widgets/brand.dart';
 import '../widgets/clock_widget.dart';
+import '../widgets/code_avatar.dart';
 import 'ticket_screen.dart';
 
 /// Layar loket "Plotting" — sebelum ambil tiket, pemohon klasifikasi diri:
@@ -63,15 +66,19 @@ class _ApplicantTypeScreenState extends State<ApplicantTypeScreen> {
     Responsive.init(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background.withValues(alpha: 0.4),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          _buildHeader(),
+          KioskHeader(
+            title: '${widget.counter.name} · ${widget.counter.description}',
+            onBack: () => Navigator.of(context).pop(),
+            trailing: const [ClockWidget()],
+          ),
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(150),
-                vertical: Responsive.h(100),
+                horizontal: Responsive.w(80),
+                vertical: Responsive.h(48),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,26 +86,27 @@ class _ApplicantTypeScreenState extends State<ApplicantTypeScreen> {
                   Text(
                     'Pemohon merupakan',
                     style: TextStyle(
-                      fontSize: Responsive.sp(18),
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.navy,
+                      fontSize: Responsive.sp(26),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
                     ),
                   ),
-                  SizedBox(height: Responsive.h(4)),
+                  SizedBox(height: Responsive.h(6)),
                   Text(
-                    'Pilih salah satu untuk melanjutkan ambil nomor antrian',
+                    'Pilih salah satu untuk melanjutkan ambil nomor antrian.',
                     style: TextStyle(
-                      fontSize: Responsive.sp(12),
+                      fontSize: Responsive.sp(15),
                       color: AppColors.textMuted,
                     ),
                   ),
-                  SizedBox(height: Responsive.h(24)),
+                  SizedBox(height: Responsive.h(28)),
                   Expanded(
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(
                           child: _OptionCard(
-                            icon: Icons.person_outline,
+                            icon: Icons.person_outline_rounded,
                             title: 'Pemohon Langsung/Prioritas',
                             description:
                                 'Mengurus sendiri, termasuk lansia & disabilitas',
@@ -106,7 +114,7 @@ class _ApplicantTypeScreenState extends State<ApplicantTypeScreen> {
                                 _pilih(ApplicantType.langsungPrioritas),
                           ),
                         ),
-                        SizedBox(width: Responsive.w(20)),
+                        SizedBox(width: Responsive.w(16)),
                         Expanded(
                           child: _OptionCard(
                             icon: Icons.assignment_ind_outlined,
@@ -122,68 +130,16 @@ class _ApplicantTypeScreenState extends State<ApplicantTypeScreen> {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      height: 100,
-      padding: EdgeInsets.only(left: Responsive.w(14), right: Responsive.w(14)),
-      decoration: BoxDecoration(
-        color: AppColors.navy,
-        border: Border(
-          bottom: BorderSide(color: AppColors.gold, width: Responsive.h(3)),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Kembali',
-            icon: Icon(
-              Icons.arrow_back,
-              color: AppColors.white,
-              size: Responsive.w(24),
-            ),
-          ),
-          SizedBox(width: Responsive.w(4)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  widget.counter.name.toUpperCase(),
-                  style: TextStyle(
-                    fontFamily: 'NunitoSans',
-                    fontSize: Responsive.sp(15),
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
-                Text(
-                  'Sistem Antrian Digital',
-                  style: TextStyle(
-                    fontFamily: 'NunitoSans',
-                    fontSize: Responsive.sp(11),
-                    color: AppColors.goldLight,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const ClockWidget(),
+          const AppFooter(),
         ],
       ),
     );
   }
 }
 
+/// Kartu pilihan — bentuknya sama dengan kartu layanan di HomeScreen
+/// (putih bergaris, pita navy "Pilih" di kaki kartu), supaya pengunjung
+/// langsung paham ini juga bisa disentuh.
 class _OptionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -200,47 +156,75 @@ class _OptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.cardLarge),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.cardLarge),
         enableFeedback: false,
-        child: Container(
-          clipBehavior: Clip.antiAlias,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(AppRadius.cardLarge),
-            border: Border.all(color: AppColors.border, width: 2),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: Responsive.sp(56), color: AppColors.navy),
-              SizedBox(height: Responsive.h(16)),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: Responsive.sp(18),
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.navy,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(Responsive.w(24)),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CodeAvatar(icon: icon, size: Responsive.w(88)),
+                    SizedBox(height: Responsive.h(22)),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: Responsive.sp(22),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    SizedBox(height: Responsive.h(8)),
+                    Text(
+                      description,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: Responsive.sp(15),
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: Responsive.h(8)),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: Responsive.w(16)),
-                child: Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: Responsive.sp(12),
-                    color: AppColors.textMuted,
+            ),
+            Container(
+              color: AppColors.navy,
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.w(20),
+                vertical: Responsive.sp(11),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Pilih',
+                    style: TextStyle(
+                      fontSize: Responsive.sp(15),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.white,
+                    ),
                   ),
-                ),
+                  SizedBox(width: Responsive.w(8)),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: Responsive.sp(20),
+                    color: AppColors.white,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

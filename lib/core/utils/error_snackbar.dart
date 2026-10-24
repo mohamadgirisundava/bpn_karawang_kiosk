@@ -70,7 +70,7 @@ void showSuccessSnackbar(
   _showKioskSnackbar(
     context,
     message: message,
-    background: AppColors.green,
+    background: AppColors.success,
     icon: Icons.check_circle_outline,
     duration: duration,
   );

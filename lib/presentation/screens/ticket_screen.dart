@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/services/sound_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/audio_feedback.dart';
 import '../../core/utils/error_snackbar.dart';
 import '../../core/utils/responsive.dart';
@@ -12,9 +13,12 @@ import '../../domain/entities/counter_entity.dart';
 import '../../injection.dart';
 import '../cubits/ticket/ticket_cubit.dart';
 import '../cubits/ticket/ticket_state.dart';
+import '../widgets/app_button.dart';
 import '../widgets/app_footer.dart';
-import '../widgets/glossy_avatar.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/brand.dart';
+import '../widgets/clock_widget.dart';
+import '../widgets/code_avatar.dart';
+import '../widgets/status_badge.dart';
 
 /// Ticket Screen - Halaman konfirmasi & cetak tiket setelah memilih counter.
 class TicketScreen extends StatefulWidget {
@@ -122,118 +126,51 @@ class _TicketScreenState extends State<TicketScreen>
             }
           },
           child: Scaffold(
-            backgroundColor: AppColors.background.withValues(alpha: 0.4),
+            backgroundColor: AppColors.background,
             body: Column(
               children: [
-                Container(
-                  width: double.infinity,
-                  height: 100,
-                  padding: EdgeInsets.only(
-                    left: Responsive.w(8),
-                    right: Responsive.w(14),
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.navy,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.gold,
-                        width: Responsive.h(3),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${widget.counter.name} - ${widget.counter.description}',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'NunitoSans',
-                            fontSize: Responsive.sp(16),
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                KioskHeader(
+                  title:
+                      '${widget.counter.name} · ${widget.counter.description}',
+                  onBack: () => Navigator.of(context).pop(),
+                  trailing: const [ClockWidget()],
                 ),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: Responsive.w(20),
-                      vertical: Responsive.h(12),
+                      vertical: Responsive.h(28),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            AudioFeedback.tap();
-                            Navigator.of(context).pop();
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: Responsive.w(620),
+                          maxHeight: Responsive.h(800),
+                        ),
+                        child: BlocBuilder<TicketCubit, TicketState>(
+                          builder: (context, state) {
+                            switch (state.status) {
+                              case TicketStatus.confirm:
+                                return _buildTicketDetailView(state);
+                              case TicketStatus.loading:
+                                return _buildLoadingView();
+                              case TicketStatus.success:
+                                switch (state.printJobStatus) {
+                                  case PrintJobStatus.idle:
+                                    return _buildTicketDetailView(state);
+                                  case PrintJobStatus.printing:
+                                    return _buildPrintingView();
+                                  case PrintJobStatus.printed:
+                                    return _buildPrintedView(state);
+                                  case PrintJobStatus.failed:
+                                    return _buildPrintFailedView(state);
+                                }
+                              case TicketStatus.error:
+                                return _buildErrorView(state);
+                            }
                           },
-                          borderRadius: BorderRadius.circular(Responsive.r(4)),
-                          enableFeedback: false,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: Responsive.w(8),
-                              vertical: Responsive.h(4),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.arrow_back,
-                                  size: Responsive.sp(15),
-                                  color: AppColors.navy,
-                                ),
-                                SizedBox(width: Responsive.w(6)),
-                                Text(
-                                  'Kembali ke pilihan loket',
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(13),
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.navy,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
-                        Expanded(
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: Responsive.w(560),
-                                maxHeight: Responsive.h(680),
-                              ),
-                              child: BlocBuilder<TicketCubit, TicketState>(
-                                builder: (context, state) {
-                                  switch (state.status) {
-                                    case TicketStatus.confirm:
-                                      return _buildTicketDetailView(state);
-                                    case TicketStatus.loading:
-                                      return _buildLoadingView();
-                                    case TicketStatus.success:
-                                      switch (state.printJobStatus) {
-                                        case PrintJobStatus.idle:
-                                          return _buildTicketDetailView(state);
-                                        case PrintJobStatus.printing:
-                                          return _buildPrintingView();
-                                        case PrintJobStatus.printed:
-                                          return _buildPrintedView(state);
-                                        case PrintJobStatus.failed:
-                                          return _buildPrintFailedView(state);
-                                      }
-                                    case TicketStatus.error:
-                                      return _buildErrorView(state);
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -246,7 +183,7 @@ class _TicketScreenState extends State<TicketScreen>
     );
   }
 
-  Widget _buildLoadingView() {
+  Widget _buildProgress({required String label, required Color color}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -254,48 +191,59 @@ class _TicketScreenState extends State<TicketScreen>
           width: Responsive.w(56),
           height: Responsive.w(56),
           child: CircularProgressIndicator(
-            strokeWidth: Responsive.w(5),
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy),
+            strokeWidth: Responsive.w(4),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
-        SizedBox(height: Responsive.h(18)),
+        SizedBox(height: Responsive.h(20)),
         Text(
-          'Memproses nomor antrian...',
+          label,
           style: TextStyle(
-            fontSize: Responsive.sp(16),
-            color: AppColors.navy,
-            fontWeight: FontWeight.w500,
+            fontSize: Responsive.sp(18),
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
     );
   }
 
+  Widget _buildLoadingView() =>
+      _buildProgress(label: 'Memproses nomor antrian...', color: AppColors.navy);
+
   Widget _buildPrintingView() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          width: Responsive.w(56),
-          height: Responsive.w(56),
+          width: Responsive.w(72),
+          height: Responsive.w(72),
           child: Stack(
             alignment: Alignment.center,
             children: [
-              CircularProgressIndicator(
-                strokeWidth: Responsive.w(5),
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
+              SizedBox.expand(
+                child: CircularProgressIndicator(
+                  strokeWidth: Responsive.w(4),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.gold,
+                  ),
+                ),
               ),
-              Icon(Icons.print, size: Responsive.sp(20), color: AppColors.navy),
+              Icon(
+                Icons.print_outlined,
+                size: Responsive.sp(26),
+                color: AppColors.navy,
+              ),
             ],
           ),
         ),
-        SizedBox(height: Responsive.h(18)),
+        SizedBox(height: Responsive.h(20)),
         Text(
-          'Tiket Sedang Dicetak...',
+          'Tiket sedang dicetak...',
           style: TextStyle(
-            fontSize: Responsive.sp(16),
-            color: AppColors.navy,
-            fontWeight: FontWeight.w500,
+            fontSize: Responsive.sp(18),
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -304,7 +252,7 @@ class _TicketScreenState extends State<TicketScreen>
 
   Widget _buildPrintFailedView(TicketState state) => _buildTicketResultView(
     state,
-    icon: Icons.print_disabled,
+    icon: Icons.print_disabled_outlined,
     accent: AppColors.orange,
     title: 'Tiket Gagal Dicetak',
     // Alasannya kalau ada; kalau kosong, tetap kasih arahan yang bisa
@@ -321,33 +269,33 @@ class _TicketScreenState extends State<TicketScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.cloud_off,
-            size: Responsive.sp(48),
-            color: Colors.red.shade300,
+          CodeAvatar(
+            icon: Icons.cloud_off_rounded,
+            size: Responsive.w(72),
+            color: AppColors.danger,
           ),
-          SizedBox(height: Responsive.h(12)),
+          SizedBox(height: Responsive.h(18)),
           Text(
             'Gagal Mengambil Nomor Antrian',
             style: TextStyle(
-              fontSize: Responsive.sp(18),
-              fontWeight: FontWeight.bold,
-              color: AppColors.navy,
+              fontSize: Responsive.sp(21),
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
             ),
           ),
-          SizedBox(height: Responsive.h(6)),
+          SizedBox(height: Responsive.h(8)),
           Text(
             state.errorMessage,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: Responsive.sp(13),
+              fontSize: Responsive.sp(15),
               color: AppColors.textMuted,
             ),
           ),
-          SizedBox(height: Responsive.h(16)),
-          GradientButton(
+          SizedBox(height: Responsive.h(24)),
+          AppButton(
             label: 'Coba Lagi',
-            icon: Icons.refresh,
+            icon: Icons.refresh_rounded,
             onPressed: _ambilNomor,
           ),
         ],
@@ -361,7 +309,7 @@ class _TicketScreenState extends State<TicketScreen>
     final estimasiMenit = sisaAntrian * state.estimatePerPerson;
     final hasTicket = state.ticket != null;
     final nomorTiket = state.ticket?.queueCode ?? '-';
-    const cardWidth = 420.0;
+    final cardWidth = Responsive.w(440);
 
     return ScaleTransition(
       scale: _scaleAnim,
@@ -370,283 +318,115 @@ class _TicketScreenState extends State<TicketScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: Responsive.w(cardWidth),
-              padding: EdgeInsets.symmetric(
-                horizontal: Responsive.w(16),
-                vertical: Responsive.h(14),
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.border, width: 2),
-              ),
-              child: Row(
+            Panel(
+              width: cardWidth,
+              padding: EdgeInsets.zero,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  GlossyAvatar(
-                    code: widget.counter.code,
-                    size: Responsive.w(52),
-                    fontSize: Responsive.sp(20),
-                  ),
-                  SizedBox(width: Responsive.w(14)),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Layanan yang dipilih.
+                  Padding(
+                    padding: EdgeInsets.all(Responsive.w(18)),
+                    child: Row(
                       children: [
-                        Text(
-                          widget.counter.name.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: Responsive.sp(10),
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.6,
-                            color: AppColors.textMuted,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        CodeAvatar(
+                          code: widget.counter.code,
+                          size: Responsive.w(52),
+                          fontSize: Responsive.sp(24),
                         ),
-                        SizedBox(height: Responsive.h(2)),
-                        Text(
-                          widget.counter.description,
-                          style: TextStyle(
-                            fontSize: Responsive.sp(15),
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.navy,
+                        SizedBox(width: Responsive.w(14)),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.counter.name,
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(13),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: Responsive.h(2)),
+                              Text(
+                                widget.counter.description,
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(18),
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textDark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (widget.counter.isPriority) ...[
+                          SizedBox(width: Responsive.w(8)),
+                          const StatusBadge(
+                            label: 'Layanan prioritas',
+                            color: AppColors.orange,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+                  // Dua angka utama: yang sedang dilayani, dan nomor
+                  // pengunjung (atau sisa antrian sebelum ambil nomor).
+                  Padding(
+                    padding: EdgeInsets.all(Responsive.w(12)),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _NumberBlock(
+                            label: 'Sedang dilayani',
+                            value: nomorBerjalan,
+                          ),
+                        ),
+                        SizedBox(width: Responsive.w(12)),
+                        Expanded(
+                          child: _NumberBlock(
+                            label: hasTicket
+                                ? 'Nomor antrian Anda'
+                                : 'Sisa antrian',
+                            value: hasTicket ? nomorTiket : '$sisaAntrian',
+                            caption: hasTicket
+                                ? 'Harap simpan nomor ini'
+                                : 'orang',
+                            // Emas menandai "milik Anda", sama dengan penanda
+                            // nomor aktif di layar petugas Loket.
+                            background: hasTicket
+                                ? AppColors.goldSoft
+                                : AppColors.navySoft,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: Responsive.h(12)),
-            Container(
-              width: Responsive.w(cardWidth),
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.border, width: 2),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: Responsive.w(12),
-                            vertical: Responsive.h(16),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'SEDANG DILAYANI',
-                                style: TextStyle(
-                                  fontSize: Responsive.sp(9.5),
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.4,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                              SizedBox(height: Responsive.h(6)),
-                              Text(
-                                nomorBerjalan,
-                                style: TextStyle(
-                                  fontSize: Responsive.sp(26),
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.navy,
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: Responsive.h(6)),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: Responsive.w(6),
-                                    height: Responsive.w(6),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.green,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  SizedBox(width: Responsive.w(5)),
-                                  Text(
-                                    'Aktif',
-                                    style: TextStyle(
-                                      fontSize: Responsive.sp(10),
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          margin: EdgeInsets.fromLTRB(
-                            0,
-                            Responsive.h(10),
-                            Responsive.w(10),
-                            Responsive.h(10),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: Responsive.w(12),
-                            vertical: Responsive.h(16),
-                          ),
-                          decoration: BoxDecoration(
-                            color: hasTicket
-                                ? AppColors.gold.withValues(alpha: 0.28)
-                                : AppColors.lightBlue.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(AppRadius.chip),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                hasTicket ? 'NOMOR TIKET ANDA' : 'SISA ANTRIAN',
-                                style: TextStyle(
-                                  fontSize: Responsive.sp(9.5),
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.4,
-                                  color: AppColors.navy,
-                                ),
-                              ),
-                              SizedBox(height: Responsive.h(6)),
-                              Text(
-                                hasTicket ? nomorTiket : '$sisaAntrian',
-                                style: TextStyle(
-                                  fontSize: Responsive.sp(26),
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.navy,
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: Responsive.h(6)),
-                              Text(
-                                hasTicket ? 'Harap simpan nomor ini' : 'orang',
-                                style: TextStyle(
-                                  fontSize: Responsive.sp(9.5),
-                                  color: AppColors.navy.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(height: 2, color: AppColors.border),
+                  const Divider(),
                   IntrinsicHeight(
                     child: Row(
                       children: [
                         Expanded(
-                          child: Container(
-                            padding: EdgeInsets.fromLTRB(
-                              Responsive.w(12),
-                              Responsive.h(10),
-                              Responsive.w(12),
-                              Responsive.h(14),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.people_outline,
-                                  size: Responsive.sp(14),
-                                  color: AppColors.lightBlue,
-                                ),
-                                SizedBox(width: Responsive.w(6)),
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      hasTicket
-                                          ? 'Antrian sebelum Anda'
-                                          : 'Antrian saat ini',
-                                      style: TextStyle(
-                                        fontSize: Responsive.sp(9.5),
-                                        color: AppColors.textMuted,
-                                      ),
-                                    ),
-                                    Text(
-                                      '$sisaAntrian orang',
-                                      style: TextStyle(
-                                        fontSize: Responsive.sp(11.5),
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textDark,
-                                        fontFeatures: const [
-                                          FontFeature.tabularFigures(),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                          child: _InfoItem(
+                            icon: Icons.people_outline_rounded,
+                            label: hasTicket
+                                ? 'Antrian sebelum Anda'
+                                : 'Antrian saat ini',
+                            value: '$sisaAntrian orang',
                           ),
                         ),
-                        const VerticalDivider(
-                          width: 2,
-                          thickness: 2,
-                          color: AppColors.border,
-                        ),
+                        const VerticalDivider(width: 1),
                         Expanded(
-                          child: Container(
-                            padding: EdgeInsets.fromLTRB(
-                              Responsive.w(12),
-                              Responsive.h(10),
-                              Responsive.w(12),
-                              Responsive.h(14),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.access_time,
-                                  size: Responsive.sp(14),
-                                  color: AppColors.navy,
-                                ),
-                                SizedBox(width: Responsive.w(6)),
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Estimasi waktu tunggu',
-                                      style: TextStyle(
-                                        fontSize: Responsive.sp(9.5),
-                                        color: AppColors.textMuted,
-                                      ),
-                                    ),
-                                    Text(
-                                      '± $estimasiMenit menit',
-                                      style: TextStyle(
-                                        fontSize: Responsive.sp(11.5),
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textDark,
-                                        fontFeatures: const [
-                                          FontFeature.tabularFigures(),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                          child: _InfoItem(
+                            icon: Icons.schedule_rounded,
+                            label: 'Estimasi waktu tunggu',
+                            value: '± $estimasiMenit menit',
                           ),
                         ),
                       ],
@@ -655,75 +435,34 @@ class _TicketScreenState extends State<TicketScreen>
                 ],
               ),
             ),
-            if (widget.counter.isPriority) ...[
-              SizedBox(height: Responsive.h(12)),
-              Container(
-                width: Responsive.w(cardWidth),
-                clipBehavior: Clip.antiAlias,
-                decoration: GlossyStyle.decoration(
-                  AppColors.orange,
-                  radius: AppRadius.chip,
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    GlossyStyle.highlight(
-                      radius: AppRadius.chip,
-                      height: Responsive.h(16),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: Responsive.w(16),
-                        vertical: Responsive.h(10),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.warning_amber,
-                            color: Colors.white,
-                            size: Responsive.sp(18),
-                          ),
-                          SizedBox(width: Responsive.w(8)),
-                          Text(
-                            'Layanan Prioritas',
-                            style: TextStyle(
-                              fontSize: Responsive.sp(12.5),
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            SizedBox(height: Responsive.h(16)),
+            SizedBox(height: Responsive.h(20)),
             SizedBox(
-              width: Responsive.w(cardWidth),
+              width: cardWidth,
               child: hasTicket
-                  ? GradientButton(
+                  ? AppButton(
                       label: 'Cetak Tiket Antrian',
-                      icon: Icons.print,
+                      icon: Icons.print_outlined,
+                      large: true,
                       onPressed: _mulaiCetak,
                     )
-                  : GradientButton(
+                  : AppButton(
                       label: 'Ambil Tiket',
+                      large: true,
                       onPressed: _ambilNomor,
                     ),
             ),
-            SizedBox(height: Responsive.h(8)),
-            Text(
-              hasTicket
-                  ? 'Perhatikan papan informasi antrian dan pastikan nomor Anda terdengar'
-                  : 'Nomor antrian akan diberikan setelah Anda menekan tombol di atas',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: Responsive.sp(11),
-                color: AppColors.textMuted,
+            SizedBox(height: Responsive.h(12)),
+            SizedBox(
+              width: cardWidth,
+              child: Text(
+                hasTicket
+                    ? 'Perhatikan papan informasi antrian dan pastikan nomor Anda terdengar'
+                    : 'Nomor antrian akan diberikan setelah Anda menekan tombol di atas',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: Responsive.sp(13),
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
           ],
@@ -734,8 +473,8 @@ class _TicketScreenState extends State<TicketScreen>
 
   Widget _buildPrintedView(TicketState state) => _buildTicketResultView(
     state,
-    icon: Icons.check_circle_outline,
-    accent: AppColors.green,
+    icon: Icons.check_rounded,
+    accent: AppColors.success,
     title: 'Tiket Berhasil Dicetak',
     subtitle: 'Ambil tiket dari mesin pencetak di bawah layar ini',
     footnote: 'Simpan tiket ini hingga nomor Anda dipanggil',
@@ -745,8 +484,8 @@ class _TicketScreenState extends State<TicketScreen>
   ///
   /// Waktu cetak gagal, layar inilah satu-satunya bukti nomor antrian yang
   /// dipegang pengunjung — jadi nomornya harus sebesar dan sejelas versi
-  /// yang tercetak, biar bisa difoto. Versi lama cuma nyelipin nomornya di
-  /// tengah kalimat, susah dibaca apalagi difoto.
+  /// yang tercetak, biar bisa difoto. Kartunya meniru kertas tiket: pita
+  /// identitas di atas, logo + nama kantor, lalu nomor besar.
   Widget _buildTicketResultView(
     TicketState state, {
     required IconData icon,
@@ -761,134 +500,126 @@ class _TicketScreenState extends State<TicketScreen>
     final tanggal = '${now.day}/${now.month}/${now.year}';
     final pukul =
         '${now.hour.toString().padLeft(2, '0')}.${now.minute.toString().padLeft(2, '0')} WIB';
-    const cardWidth = 340.0;
+    final cardWidth = Responsive.w(380);
 
     return FittedBox(
       fit: BoxFit.contain,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Pakai GlossyAvatar, bukan lingkaran datar berwarna transparan —
-          // ikon sebesar ini jadi elemen paling menonjol di layar, kalau
-          // datar dia jadi satu-satunya benda yang nggak ikut sistem desain.
-          GlossyAvatar(
+          CodeAvatar(
             icon: icon,
             size: Responsive.w(64),
             color: accent,
             shape: BoxShape.circle,
-            fontSize: Responsive.sp(32),
+            fontSize: Responsive.sp(34),
           ),
           SizedBox(height: Responsive.h(14)),
           Text(
             title,
             style: TextStyle(
-              fontSize: Responsive.sp(20),
-              fontWeight: FontWeight.bold,
-              color: AppColors.navy,
+              fontSize: Responsive.sp(24),
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
             ),
           ),
           SizedBox(height: Responsive.h(4)),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: Responsive.w(16)),
+          SizedBox(
+            width: cardWidth * 1.3,
             child: Text(
               subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: Responsive.sp(12.5),
+                fontSize: Responsive.sp(15),
                 color: AppColors.textMuted,
               ),
             ),
           ),
-          SizedBox(height: Responsive.h(18)),
-          Container(
-            width: Responsive.w(cardWidth),
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: AppColors.border, width: 2),
-            ),
+          SizedBox(height: Responsive.h(20)),
+          Panel(
+            width: cardWidth,
+            padding: EdgeInsets.zero,
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: double.infinity,
+                const BrandStripe(),
+                Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: Responsive.w(16),
-                    vertical: Responsive.h(10),
+                    horizontal: Responsive.w(18),
+                    vertical: Responsive.w(14),
                   ),
-                  color: AppColors.navy,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                  child: Row(
                     children: [
-                      Text(
-                        'KANTOR PERTANAHAN',
-                        style: TextStyle(
-                          fontFamily: 'NunitoSans',
-                          fontSize: Responsive.sp(9),
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                          color: AppColors.goldLight,
+                      BrandLogo(size: Responsive.w(34)),
+                      SizedBox(width: Responsive.w(10)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Kantor Pertanahan Kab. Karawang',
+                              style: TextStyle(
+                                fontSize: Responsive.sp(12),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            Text(
+                              widget.counter.description,
+                              style: TextStyle(
+                                fontSize: Responsive.sp(16),
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textDark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                      ),
-                      Text(
-                        widget.counter.description,
-                        style: TextStyle(
-                          fontFamily: 'NunitoSans',
-                          fontSize: Responsive.sp(14),
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
+                const Divider(),
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: Responsive.w(16),
-                    vertical: Responsive.h(16),
+                    horizontal: Responsive.w(18),
+                    vertical: Responsive.w(18),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        'NOMOR ANTRIAN ANDA',
-                        style: TextStyle(
-                          fontSize: Responsive.sp(10),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                      SizedBox(height: Responsive.h(6)),
+                      const SectionLabel('Nomor antrian Anda'),
+                      SizedBox(height: Responsive.h(4)),
                       Text(
                         nomorTiket,
                         style: TextStyle(
-                          fontSize: Responsive.sp(36),
-                          fontWeight: FontWeight.bold,
+                          fontFamily: AppTheme.numberFamily,
+                          fontSize: Responsive.sp(52),
+                          fontWeight: FontWeight.w800,
                           color: AppColors.navy,
+                          height: 1.1,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(height: 2, color: AppColors.border),
+                const Divider(),
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: Responsive.w(16),
-                    vertical: Responsive.h(10),
+                    horizontal: Responsive.w(18),
+                    vertical: Responsive.w(12),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildTicketInfoRow('Tanggal', tanggal),
-                      SizedBox(height: Responsive.h(4)),
+                      SizedBox(height: Responsive.h(6)),
                       _buildTicketInfoRow('Pukul', pukul),
-                      SizedBox(height: Responsive.h(4)),
+                      SizedBox(height: Responsive.h(6)),
                       _buildTicketInfoRow(
                         'Antrian sebelum Anda',
                         '$sisaAntrian orang',
@@ -897,18 +628,18 @@ class _TicketScreenState extends State<TicketScreen>
                     ],
                   ),
                 ),
-                Container(height: 2, color: AppColors.border),
-                Padding(
+                Container(
+                  color: AppColors.background,
                   padding: EdgeInsets.symmetric(
-                    horizontal: Responsive.w(16),
-                    vertical: Responsive.h(12),
+                    horizontal: Responsive.w(18),
+                    vertical: Responsive.w(12),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.info_outline,
-                        size: Responsive.sp(13),
+                        Icons.info_outline_rounded,
+                        size: Responsive.sp(15),
                         color: AppColors.textMuted,
                       ),
                       SizedBox(width: Responsive.w(6)),
@@ -917,7 +648,7 @@ class _TicketScreenState extends State<TicketScreen>
                           footnote,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: Responsive.sp(11),
+                            fontSize: Responsive.sp(12.5),
                             color: AppColors.textMuted,
                           ),
                         ),
@@ -930,8 +661,8 @@ class _TicketScreenState extends State<TicketScreen>
           ),
           SizedBox(height: Responsive.h(20)),
           SizedBox(
-            width: Responsive.w(cardWidth),
-            child: GradientButton(label: 'Selesai', onPressed: _selesai),
+            width: cardWidth,
+            child: AppButton(label: 'Selesai', large: true, onPressed: _selesai),
           ),
         ],
       ),
@@ -945,20 +676,132 @@ class _TicketScreenState extends State<TicketScreen>
         Text(
           label,
           style: TextStyle(
-            fontSize: Responsive.sp(12),
+            fontSize: Responsive.sp(13.5),
             color: AppColors.textMuted,
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            fontSize: Responsive.sp(12.5),
-            fontWeight: FontWeight.w600,
+            fontSize: Responsive.sp(14),
+            fontWeight: FontWeight.w700,
             color: valueColor ?? AppColors.textDark,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Blok angka besar di kartu konfirmasi. Tanpa [background] tampil polos
+/// di atas putih; dengan [background] jadi kotak sorotan warna tipis.
+class _NumberBlock extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? caption;
+  final Color? background;
+
+  const _NumberBlock({
+    required this.label,
+    required this.value,
+    this.caption,
+    this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.w(12),
+        vertical: Responsive.w(14),
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SectionLabel(
+            label,
+            color: background == null ? AppColors.textMuted : AppColors.navy,
+          ),
+          SizedBox(height: Responsive.h(4)),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: AppTheme.numberFamily,
+              fontSize: Responsive.sp(34),
+              fontWeight: FontWeight.w800,
+              color: AppColors.navy,
+              height: 1.1,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          SizedBox(height: Responsive.h(4)),
+          Text(
+            caption ?? ' ',
+            style: TextStyle(
+              fontSize: Responsive.sp(12.5),
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Satu keterangan kecil berikon di kaki kartu konfirmasi.
+class _InfoItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.w(18),
+        vertical: Responsive.w(14),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: Responsive.sp(20), color: AppColors.navy),
+          SizedBox(width: Responsive.w(10)),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: Responsive.sp(12.5),
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: Responsive.sp(15),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
