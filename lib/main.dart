@@ -4,13 +4,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'core/constants/app_colors.dart';
 import 'core/services/adhan_scheduler_service.dart';
 import 'core/services/background_audio.dart';
 import 'core/services/call_announcer_service.dart';
 import 'core/services/kiosk_foreground_task.dart';
 import 'core/services/ceremony_audio_service.dart';
 import 'core/services/scheduled_audio_service.dart';
+import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'injection.dart';
 import 'presentation/screens/idle_screen.dart';
@@ -78,31 +78,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'BPN Karawang Kiosk',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Nunito',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.navy,
-          primary: AppColors.navy,
-          secondary: AppColors.gold,
-          tertiary: AppColors.green,
-          surface: AppColors.white,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.navy,
-          foregroundColor: AppColors.white,
-          elevation: 0,
-        ),
-        // Material 3 default-nya dialog pakai colorScheme.surfaceContainerHigh
-        // (abu-lavender ke-tint dari seedColor navy), bukan colorScheme.surface
-        // yang udah di-set putih di atas — beda sendiri dari kartu-kartu lain
-        // yang eksplisit putih. Radius/border dialog sendiri diset per-lokasi
-        // (butuh Responsive yang belum ready pas ThemeData ini dibangun).
-        dialogTheme: const DialogThemeData(
-          backgroundColor: AppColors.white,
-          elevation: 0,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       builder: EasyLoading.init(
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(

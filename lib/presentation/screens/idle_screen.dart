@@ -4,11 +4,13 @@ import '../../core/services/adhan_scheduler_service.dart';
 import '../../core/services/operating_hours_service.dart';
 import '../../core/utils/responsive.dart';
 import 'closed_screen.dart';
-import '../widgets/glossy_avatar.dart';
+import '../widgets/brand.dart';
+import '../widgets/code_avatar.dart';
 import 'home_screen.dart';
 
 /// Idle Screen - tampil saat tidak ada interaksi.
-/// Menampilkan logo BPN dan teks "Sentuh layar untuk mulai".
+/// Panel identitas bermotif fasad di kiri, ajakan "Sentuh layar untuk
+/// mulai" di kanan. Seluruh layar bisa disentuh, bukan cuma teksnya.
 class IdleScreen extends StatefulWidget {
   const IdleScreen({super.key});
 
@@ -88,43 +90,40 @@ class _IdleScreenState extends State<IdleScreen>
           backgroundColor: AppColors.white,
           body: Stack(
             children: [
-              SizedBox.expand(
-                child: Center(
+              Positioned.fill(
+                child: IdentityLayout(
+                  title: 'Ambil Nomor\nAntrian',
+                  subtitle:
+                      'Sistem antrian pelayanan pertanahan\nKabupaten Karawang.',
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.asset(
-                        'assets/images/bpn_karawang_logo.png',
-                        width: Responsive.w(160),
-                        height: Responsive.w(160),
-                        errorBuilder: (context, error, stackTrace) {
-                          return GlossyAvatar(
-                            icon: Icons.account_balance,
-                            shape: BoxShape.circle,
-                            size: Responsive.w(160),
-                            fontSize: Responsive.sp(100),
-                          );
-                        },
+                      CodeAvatar(
+                        icon: Icons.touch_app_outlined,
+                        size: Responsive.w(76),
                       ),
-                      SizedBox(height: Responsive.h(24)),
-                      Text(
-                        'Kantor Pertanahan\nKabupaten Karawang',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: Responsive.sp(28),
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.navy,
-                        ),
-                      ),
-                      SizedBox(height: Responsive.h(40)),
+                      SizedBox(height: Responsive.h(28)),
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: Text(
-                          'Sentuh layar untuk mulai',
+                          'Sentuh layar\nuntuk mulai',
                           style: TextStyle(
-                            fontSize: Responsive.sp(20),
-                            color: AppColors.textMuted,
+                            fontSize: Responsive.sp(34),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                            height: 1.15,
                           ),
+                        ),
+                      ),
+                      SizedBox(height: Responsive.h(16)),
+                      Text(
+                        'Pilih jenis layanan, lalu ambil dan cetak nomor '
+                        'antrian Anda.',
+                        style: TextStyle(
+                          fontSize: Responsive.sp(16),
+                          color: AppColors.textMuted,
+                          height: 1.5,
                         ),
                       ),
                     ],
